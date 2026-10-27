@@ -663,8 +663,8 @@ async function sendMessage(userText) {
   // Đổi trạng thái nút Gửi thành nút Dừng
   setStreamingState(true);
 
-  // 4. Chuẩn bị 12 tin nhắn gần nhất làm ngữ cảnh
-  const recentMessages = currentConv.messages.slice(-12).map(m => ({
+  // 4. Tối ưu token tối đa: Chỉ gửi 4 tin nhắn gần nhất làm ngữ cảnh
+  const recentMessages = currentConv.messages.slice(-4).map(m => ({
     role: m.role,
     content: m.content
   }));
