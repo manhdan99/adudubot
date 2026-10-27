@@ -296,3 +296,5 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`🛸 Người ngoài hành tinh đầu vuông cọc cằn đã sẵn sàng!`);
   console.log(`=======================================================`);
 });
+
+module.exports = app;
