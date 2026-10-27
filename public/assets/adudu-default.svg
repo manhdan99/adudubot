@@ -1,0 +1,101 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="100%" height="100%">
+  <defs>
+    <!-- Gradient cho da xanh ngoài hành tinh -->
+    <linearGradient id="alienSkin" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#46e379"/>
+      <stop offset="60%" stop-color="#2ebd59"/>
+      <stop offset="100%" stop-color="#1ea045"/>
+    </linearGradient>
+    <!-- Gradient cho bóng đầu -->
+    <linearGradient id="alienShadow" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1b7835" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#135a26" stop-opacity="0.8"/>
+    </linearGradient>
+    <!-- Gradient cho ăng-ten -->
+    <linearGradient id="antennaGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#a3ff47"/>
+      <stop offset="100%" stop-color="#4ade1d"/>
+    </linearGradient>
+    <!-- Gradient cho mắt nâu -->
+    <radialGradient id="irisGrad" cx="40%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#8a3c1b"/>
+      <stop offset="70%" stop-color="#54210a"/>
+      <stop offset="100%" stop-color="#2a0d02"/>
+    </radialGradient>
+    <!-- Gradient cho áo vest phản diện -->
+    <linearGradient id="vestGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#431966"/>
+      <stop offset="100%" stop-color="#1f0a33"/>
+    </linearGradient>
+    <filter id="comicShadow" x="-10%" y="-10%" width="125%" height="125%">
+      <feDropShadow dx="3" dy="4" stdDeviation="0" flood-color="#0e0417" flood-opacity="0.9"/>
+    </filter>
+  </defs>
+
+  <g id="alien-character">
+    <!-- Thân / Áo vest tím phản diện -->
+    <path d="M 60 195 Q 120 220 180 195 L 195 240 L 45 240 Z" fill="url(#vestGrad)" stroke="#0e0417" stroke-width="5" stroke-linejoin="round"/>
+    <!-- Cổ áo / Cổ xanh -->
+    <path d="M 90 180 L 150 180 L 140 205 L 100 205 Z" fill="#2ebd59" stroke="#0e0417" stroke-width="4"/>
+    <path d="M 85 190 L 120 215 L 155 190" fill="none" stroke="#a3ff47" stroke-width="4" stroke-linecap="round"/>
+
+    <!-- Ăng-ten bên trái -->
+    <path d="M 75 55 Q 55 25 45 15" fill="none" stroke="#0e0417" stroke-width="6" stroke-linecap="round"/>
+    <path d="M 75 55 Q 55 25 45 15" fill="none" stroke="#2ebd59" stroke-width="3.5" stroke-linecap="round"/>
+    <circle cx="43" cy="13" r="8" fill="url(#antennaGlow)" stroke="#0e0417" stroke-width="4"/>
+
+    <!-- Ăng-ten bên phải -->
+    <path d="M 165 55 Q 185 25 195 15" fill="none" stroke="#0e0417" stroke-width="6" stroke-linecap="round"/>
+    <path d="M 165 55 Q 185 25 195 15" fill="none" stroke="#2ebd59" stroke-width="3.5" stroke-linecap="round"/>
+    <circle cx="197" cy="13" r="8" fill="url(#antennaGlow)" stroke="#0e0417" stroke-width="4"/>
+
+    <!-- Đầu vuông màu xanh lá (Đặc trưng Adudu) -->
+    <rect x="42" y="46" width="156" height="142" rx="34" ry="34" fill="url(#alienSkin)" stroke="#0e0417" stroke-width="6" filter="url(#comicShadow)"/>
+
+    <!-- Bóng cằm dưới -->
+    <path d="M 50 155 Q 120 195 190 155 C 185 180 165 186 120 186 C 75 186 55 180 50 155 Z" fill="url(#alienShadow)"/>
+
+    <!-- Mái tóc / Viền trán đen đặc trưng -->
+    <path d="M 46 75 C 50 54 75 48 120 48 C 165 48 190 54 194 75 C 188 95 170 85 155 92 C 140 100 130 80 120 80 C 110 80 100 100 85 92 C 70 85 52 95 46 75 Z" fill="#14101e" stroke="#0e0417" stroke-width="4"/>
+
+    <!-- Lông mày xếch phản diện hài hước -->
+    <path d="M 60 98 Q 78 92 94 104" fill="none" stroke="#0a0512" stroke-width="6" stroke-linecap="round"/>
+    <path d="M 180 98 Q 162 92 146 104" fill="none" stroke="#0a0512" stroke-width="6" stroke-linecap="round"/>
+
+    <!-- Mắt trái -->
+    <ellipse cx="80" cy="120" rx="20" ry="24" fill="#ffffff" stroke="#0e0417" stroke-width="4"/>
+    <ellipse cx="82" cy="122" rx="12" ry="14" fill="url(#irisGrad)"/>
+    <circle cx="85" cy="124" r="7" fill="#000000"/>
+    <circle cx="80" cy="116" r="4.5" fill="#ffffff"/>
+    <circle cx="86" cy="126" r="2" fill="#ffffff"/>
+
+    <!-- Mắt phải -->
+    <ellipse cx="160" cy="120" rx="20" ry="24" fill="#ffffff" stroke="#0e0417" stroke-width="4"/>
+    <ellipse cx="158" cy="122" rx="12" ry="14" fill="url(#irisGrad)"/>
+    <circle cx="155" cy="124" r="7" fill="#000000"/>
+    <circle cx="154" cy="116" r="4.5" fill="#ffffff"/>
+    <circle cx="160" cy="126" r="2" fill="#ffffff"/>
+
+    <!-- Mũi nhỏ hoạt hình -->
+    <path d="M 116 128 Q 120 133 124 128" fill="none" stroke="#165b2e" stroke-width="3" stroke-linecap="round"/>
+
+    <!-- Miệng cười nham hiểm hài hước với răng trắng -->
+    <!-- Nền miệng tối -->
+    <path d="M 72 144 Q 120 152 168 144 C 164 174 138 180 120 180 C 102 180 76 174 72 144 Z" fill="#4a0e1c" stroke="#0e0417" stroke-width="4.5" stroke-linejoin="round"/>
+    <!-- Lưỡi đỏ hồng -->
+    <path d="M 98 168 Q 120 156 142 168 C 136 178 126 180 120 180 C 114 180 104 178 98 168 Z" fill="#d83a56"/>
+    <!-- Hàm răng trên sắc sảo / hài hước -->
+    <path d="M 75 146 Q 120 152 165 146 L 161 156 Q 120 162 79 156 Z" fill="#ffffff" stroke="#0e0417" stroke-width="2.5"/>
+    <!-- Răng chia rãnh nhẹ -->
+    <line x1="102" y1="148" x2="102" y2="159" stroke="#0e0417" stroke-width="1.5"/>
+    <line x1="120" y1="150" x2="120" y2="161" stroke="#0e0417" stroke-width="1.5"/>
+    <line x1="138" y1="148" x2="138" y2="159" stroke="#0e0417" stroke-width="1.5"/>
+
+    <!-- Lúm đồng tiền / khóe miệng tinh ranh -->
+    <path d="M 68 142 Q 66 148 70 152" fill="none" stroke="#0e0417" stroke-width="3.5" stroke-linecap="round"/>
+    <path d="M 172 142 Q 174 148 170 152" fill="none" stroke="#0e0417" stroke-width="3.5" stroke-linecap="round"/>
+
+    <!-- Vệt sáng highlight đầu kim loại / hoạt hình -->
+    <path d="M 54 62 C 60 56 70 54 84 54" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" opacity="0.6"/>
+  </g>
+</svg>

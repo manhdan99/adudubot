@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="vi" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Adudu - Trợ Lý Ngoài Hành Tinh Cọc Cằn</title>
+  
+  <link rel="icon" type="image/png" href="assets/adudu.png">
+
+  <!-- Google Fonts: Be Vietnam Pro cho toàn bộ chữ & Bangers riêng cho Logo -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Be+Vietnam+Pro:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-container">
+    
+    <!-- Lớp nền mờ khi mở Sidebar trên Mobile -->
+    <div id="sidebarBackdrop" class="sidebar-backdrop" aria-hidden="true"></div>
+
+    <!-- =================================================== -->
+    <!-- PHẦN A: SIDEBAR BÊN TRÁI (260px, thu gọn được) -->
+    <!-- =================================================== -->
+    <aside id="sidebar" class="sidebar" aria-label="Lịch sử hội thoại">
+      <div class="sidebar-header">
+        <div class="brand">
+          <img class="brand-avatar" src="assets/adudu.png" alt="Adudu" onerror="this.src='assets/adudu-default.svg'">
+          <span class="brand-name">Adudu</span>
+        </div>
+        <button id="btnCloseSidebar" class="btn-icon mobile-only" title="Đóng danh mục" aria-label="Đóng thanh bên">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+        <button id="btnCollapseDesktop" class="btn-icon desktop-only" title="Thu gọn thanh bên" aria-label="Thu gọn thanh bên">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+        </button>
+      </div>
+
+      <!-- Nút tạo cuộc trò chuyện mới -->
+      <div class="sidebar-action">
+        <button id="btnNewChat" class="btn-new-chat" aria-label="Bắt đầu cuộc trò chuyện mới">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <span>Cuộc trò chuyện mới</span>
+        </button>
+      </div>
+
+      <!-- Danh sách lịch sử hội thoại nhóm theo thời gian -->
+      <nav class="history-container" id="historyContainer" aria-label="Danh sách đoạn chat">
+        <!-- Được render tự động bằng JS -->
+      </nav>
+
+      <!-- Chân sidebar: Cài đặt và Đổi Theme Sáng/Tối -->
+      <div class="sidebar-footer">
+        <button id="btnToggleTheme" class="btn-sidebar-footer" title="Chuyển chế độ Sáng / Tối" aria-label="Chuyển đổi giao diện sáng tối">
+          <span class="theme-icon-dark">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+          </span>
+          <span class="theme-icon-light hidden">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          </span>
+          <span class="footer-label" id="themeTextLabel">Giao diện sáng</span>
+        </button>
+
+        <button id="btnOpenSettings" class="btn-sidebar-footer" title="Cài đặt" aria-label="Mở cài đặt">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          <span class="footer-label">Cài đặt</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- =================================================== -->
+    <!-- PHẦN B: KHU VỰC CHAT CHÍNH (MAIN CHAT AREA) -->
+    <!-- =================================================== -->
+    <main class="chat-main" id="chatMain">
+      
+      <!-- Header mỏng trên cùng -->
+      <header class="main-header">
+        <div class="header-left">
+          <button id="btnOpenMobileSidebar" class="btn-icon mobile-only" title="Mở danh mục" aria-label="Mở thanh bên">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+          </button>
+          <button id="btnExpandDesktop" class="btn-icon desktop-only hidden" title="Mở rộng thanh bên" aria-label="Mở thanh bên">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+          </button>
+          <h2 id="currentChatTitle" class="chat-title-header">Cuộc trò chuyện mới</h2>
+        </div>
+
+        <div class="header-right">
+          <!-- Công tắc Adudu hiện hình -->
+          <label class="toggle-pill" title="Bật/tắt pop-up Adudu xuất hiện mỗi khi hỏi">
+            <input type="checkbox" id="headerTogglePopup" checked>
+            <span class="toggle-pill-thumb">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+            </span>
+            <span class="toggle-pill-text">Adudu hiện hình</span>
+          </label>
+
+          <!-- Công tắc Đọc to -->
+          <label class="toggle-pill" title="Bật/tắt giọng đọc to">
+            <input type="checkbox" id="headerToggleSpeech" checked>
+            <span class="toggle-pill-thumb">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+            </span>
+            <span class="toggle-pill-text">Đọc to</span>
+          </label>
+        </div>
+      </header>
+
+      <!-- Vùng hiển thị tin nhắn (Cột căn giữa max-width 768px) -->
+      <div class="messages-viewport" id="messagesViewport">
+        <div class="messages-column" id="messagesColumn" role="log" aria-live="polite">
+          
+          <!-- Màn hình chào (hiện khi chưa có tin nhắn nào) -->
+          <div id="welcomeScreen" class="welcome-screen">
+            <div class="welcome-avatar-wrap">
+              <img class="welcome-avatar" src="assets/adudu.png" alt="Adudu" onerror="this.src='assets/adudu-default.svg'">
+            </div>
+            <h1 class="welcome-title">Adudu</h1>
+            <p class="welcome-greeting">Muốn hỏi gì thì hỏi nhanh lên, đừng làm tao mất thời gian.</p>
+
+            <!-- 4 thẻ gợi ý -->
+            <div class="suggestion-grid">
+              <button class="suggestion-card" data-prompt="Giải thích AI cho đứa dốt">
+                <span class="suggestion-title">Giải thích AI cho đứa dốt</span>
+                <span class="suggestion-arrow">→</span>
+              </button>
+              <button class="suggestion-card" data-prompt="Viết CV xin việc">
+                <span class="suggestion-title">Viết CV xin việc</span>
+                <span class="suggestion-arrow">→</span>
+              </button>
+              <button class="suggestion-card" data-prompt="Tại sao bầu trời màu xanh?">
+                <span class="suggestion-title">Tại sao bầu trời màu xanh?</span>
+                <span class="suggestion-arrow">→</span>
+              </button>
+              <button class="suggestion-card" data-prompt="Dạy tao nấu mì tôm">
+                <span class="suggestion-title">Dạy tao nấu mì tôm</span>
+                <span class="suggestion-arrow">→</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Danh sách các tin nhắn sẽ render tại đây -->
+          <div id="chatMessageList" class="message-list"></div>
+
+        </div>
+
+        <!-- Nút tròn nhỏ cuộn xuống khi đang kéo lên xem -->
+        <button id="btnScrollDown" class="btn-scroll-down hidden" title="Cuộn xuống tin nhắn mới" aria-label="Cuộn xuống dưới cùng">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+      </div>
+
+      <!-- Ô nhập dính ở đáy, căn giữa 768px -->
+      <footer class="input-section">
+        <div class="input-wrapper">
+          <form id="chatForm" class="input-form" autocomplete="off">
+            <textarea
+              id="messageInput"
+              class="message-textarea"
+              placeholder="Nhắn gì cho Adudu..."
+              rows="1"
+              maxlength="2000"
+              aria-label="Nội dung tin nhắn"
+              required></textarea>
+            
+            <!-- Nút gửi / Dừng streaming -->
+            <button type="submit" id="btnSubmit" class="btn-action-send" disabled aria-label="Gửi tin nhắn">
+              <!-- Icon gửi -->
+              <span id="sendIcon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+              </span>
+              <!-- Icon dừng -->
+              <span id="stopIcon" class="hidden">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>
+              </span>
+            </button>
+          </form>
+          <div class="input-disclaimer">
+            Adudu hay chửi cho vui, đừng giận nha. Câu trả lời có thể sai, hãy kiểm tra lại thông tin quan trọng.
+          </div>
+        </div>
+      </footer>
+
+    </main>
+  </div>
+
+  <!-- =================================================== -->
+  <!-- PHẦN 4: POP-UP ADUDU HIỆN HÌNH + ĐỌC TO -->
+  <!-- =================================================== -->
+  <div id="aduduModal" class="popup-overlay" role="dialog" aria-modal="true" aria-labelledby="popupAduduName" aria-hidden="true">
+    <div class="popup-backdrop" id="modalBackdrop"></div>
+    <div class="popup-card">
+      
+      <!-- Avatar lớn ở giữa -->
+      <div class="popup-avatar-container">
+        <div id="popupAvatarWrap" class="popup-avatar-wrap">
+          <img id="popupAvatarImg" class="popup-avatar" src="assets/adudu.png" alt="Adudu" onerror="this.src='assets/adudu-default.svg'">
+        </div>
+      </div>
+
+      <!-- Bong bóng thoại trắng -->
+      <div class="popup-speech-bubble">
+        <div class="speech-arrow-up"></div>
+        <div class="speech-content-wrap">
+          <div id="popupSpeechText" class="speech-text">Hừ... để tao nghĩ đã...</div>
+        </div>
+
+        <!-- Cảnh báo nếu máy không có giọng tiếng Việt -->
+        <div id="noVietnameseVoiceWarn" class="voice-warning hidden">
+          (Trình duyệt của bạn không có gói giọng tiếng Việt vi-VN)
+        </div>
+      </div>
+
+      <!-- Đúng 2 nút nhỏ bên dưới: Đọc lại & Đóng -->
+      <div class="popup-actions">
+        <button id="btnPopupReplay" class="btn-subtle" aria-label="Đọc lại câu trả lời">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+          <span>Đọc lại</span>
+        </button>
+        <button id="btnPopupClose" class="btn-subtle" aria-label="Đóng pop-up">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          <span>Đóng (Esc)</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- =================================================== -->
+  <!-- HỘP THOẠI CÀI ĐẶT (SETTINGS DIALOG) -->
+  <!-- =================================================== -->
+  <div id="settingsDialog" class="modal-dialog-overlay" role="dialog" aria-modal="true" aria-labelledby="settingsDialogTitle" aria-hidden="true">
+    <div class="dialog-backdrop" id="settingsDialogBackdrop"></div>
+    <div class="dialog-card">
+      <div class="dialog-header">
+        <h3 id="settingsDialogTitle" class="dialog-title">Cài đặt</h3>
+        <button id="btnCloseSettingsDialog" class="btn-icon" aria-label="Đóng cài đặt">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <div class="dialog-body">
+        <div class="setting-item">
+          <div class="setting-text">
+            <div class="setting-name">Adudu hiện hình</div>
+            <div class="setting-hint">Hiện pop-up Adudu to ở giữa màn hình khi nhận câu trả lời</div>
+          </div>
+          <input type="checkbox" id="settingTogglePopup" class="switch-checkbox" checked>
+        </div>
+
+        <div class="setting-item">
+          <div class="setting-text">
+            <div class="setting-name">Đọc to câu trả lời</div>
+            <div class="setting-hint">Sử dụng giọng nói trình duyệt phát âm thanh</div>
+          </div>
+          <input type="checkbox" id="settingToggleSpeech" class="switch-checkbox" checked>
+        </div>
+
+        <div class="setting-item vertical">
+          <div class="setting-text">
+            <div class="setting-name">Tốc độ đọc giọng nói: <span id="speechRateLabel">1.05x</span></div>
+          </div>
+          <input type="range" id="speechRateRange" min="0.75" max="1.5" step="0.05" value="1.05" class="slider-input">
+        </div>
+
+        <div class="setting-item">
+          <div class="setting-text">
+            <div class="setting-name">Mô hình AI</div>
+            <div id="currentModelBadge" class="setting-hint">Đang tải...</div>
+          </div>
+        </div>
+
+        <!-- Hướng dẫn bật giọng tiếng Việt -->
+        <div class="setting-voice-guide">
+          <div class="voice-guide-title">🔊 Cách bật giọng đọc Tiếng Việt chuẩn (Windows):</div>
+          <ol class="voice-guide-steps">
+            <li>Bấm phím <code>Windows + I</code> để mở <strong>Cài đặt (Settings)</strong>.</li>
+            <li>Chọn <strong>Time & Language</strong> → chọn mục <strong>Speech</strong>.</li>
+            <li>Tại <em>Manage voices</em>, bấm <strong>Add voices</strong> → chọn <strong>Vietnamese (Tiếng Việt)</strong> rồi bấm Thêm.</li>
+            <li>Cài xong, tải lại trang web là Adudu sẽ nói tiếng Việt tự nhiên!</li>
+          </ol>
+        </div>
+
+        <div class="setting-danger-zone">
+          <button id="btnClearAllHistory" class="btn-danger" aria-label="Xóa toàn bộ lịch sử trò chuyện">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            <span>Xóa toàn bộ lịch sử</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Xác Nhận (Xóa đoạn chat / Xóa toàn bộ) -->
+  <div id="confirmDialog" class="modal-dialog-overlay" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="dialog-backdrop" id="confirmDialogBackdrop"></div>
+    <div class="dialog-card dialog-card-sm">
+      <h3 id="confirmDialogTitle" class="dialog-title">Xác nhận</h3>
+      <p id="confirmDialogMessage" class="dialog-message">Bạn có chắc chắn muốn thực hiện hành động này?</p>
+      <div class="dialog-actions">
+        <button id="btnConfirmCancel" class="btn-secondary">Hủy</button>
+        <button id="btnConfirmOk" class="btn-danger-confirm">Xác nhận</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Đổi Tên Hội Thoại -->
+  <div id="renameDialog" class="modal-dialog-overlay" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="dialog-backdrop" id="renameDialogBackdrop"></div>
+    <div class="dialog-card dialog-card-sm">
+      <h3 class="dialog-title">Đổi tên cuộc trò chuyện</h3>
+      <input type="text" id="renameInput" class="dialog-input" maxlength="60" placeholder="Nhập tên mới...">
+      <div class="dialog-actions">
+        <button id="btnRenameCancel" class="btn-secondary">Hủy</button>
+        <button id="btnRenameOk" class="btn-primary">Lưu</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,27 @@
+{
+  "name": "chatbot-adudu",
+  "version": "1.0.0",
+  "description": "Chatbot Adudu - Ke Xam Luoc Ca Cao Vi Dai voi HTML/CSS/JS thuan va Express backend",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "keywords": [
+    "adudu",
+    "chatbot",
+    "cerebras",
+    "groq",
+    "express"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2"
+  },
+  "devDependencies": {
+    "puppeteer-core": "^25.16.0"
+  }
+}
