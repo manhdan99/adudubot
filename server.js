@@ -89,8 +89,31 @@ function parseDevice(ua = '') {
 }
 
 function getKvConfig() {
-  let url = (process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL || '').trim();
-  const token = (process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN || '').trim();
+  let url = (
+    process.env.KV_REST_API_URL ||
+    process.env.UPSTASH_REDIS_REST_URL ||
+    process.env.STORAGE_REST_API_URL ||
+    process.env.UPSTASH_REST_API_URL ||
+    ''
+  ).trim();
+
+  let token = (
+    process.env.KV_REST_API_TOKEN ||
+    process.env.UPSTASH_REDIS_REST_TOKEN ||
+    process.env.STORAGE_REST_API_TOKEN ||
+    process.env.UPSTASH_REST_API_TOKEN ||
+    ''
+  ).trim();
+
+  if (!url || !token) {
+    const urlKey = Object.keys(process.env).find(k => k.endsWith('_REST_API_URL') || k.endsWith('_REDIS_REST_URL'));
+    const tokenKey = Object.keys(process.env).find(k => k.endsWith('_REST_API_TOKEN') || k.endsWith('_REDIS_REST_TOKEN'));
+    if (urlKey && tokenKey) {
+      url = (process.env[urlKey] || '').trim();
+      token = (process.env[tokenKey] || '').trim();
+    }
+  }
+
   if (!url || !token) return null;
   url = url.replace(/\/+$/, '');
   return { url, token };
