@@ -301,11 +301,10 @@
       gap: 6px;
       font-size: 11px;
       font-weight: 600;
-      color: #34d399;
-      background: rgba(16, 185, 129, 0.1);
       padding: 3px 10px;
       border-radius: 20px;
-      border: 1px solid rgba(16, 185, 129, 0.25);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.05);
     }
 
     .live-dot {
@@ -857,7 +856,7 @@
           <span class="brand-title">BẢNG QUẢN TRỊ HỆ THỐNG</span>
           <span class="brand-tag">manhdan99</span>
         </div>
-        <div class="live-indicator">
+        <div class="live-indicator" id="dbBadge">
           <span class="live-dot"></span>
           <span>Trực tuyến</span>
         </div>
@@ -967,6 +966,10 @@
 
   <script>
     const AUTH_KEY = 'adudu_admin_token';
+    const CACHE_USERS_KEY = 'adudu_admin_users_cache';
+    const CACHE_LOGS_KEY = 'adudu_admin_logs_cache';
+    const CACHE_STATS_KEY = 'adudu_admin_stats_cache';
+
     let currentAdminKey = sessionStorage.getItem(AUTH_KEY) || '';
     let allUsers = [];
     let selectedUserKey = null;
@@ -989,6 +992,7 @@
       statMessages: document.getElementById('statMessages'),
       statTokens: document.getElementById('statTokens'),
       statBlocked: document.getElementById('statBlocked'),
+      dbBadge: document.getElementById('dbBadge'),
       userSearch: document.getElementById('userSearch'),
       userListContainer: document.getElementById('userListContainer'),
       chatTargetHeader: document.getElementById('chatTargetHeader'),
@@ -999,7 +1003,61 @@
       emptyChatPlaceholder: document.getElementById('emptyChatPlaceholder')
     };
 
+    function getCachedUsers() {
+      try {
+        const raw = localStorage.getItem(CACHE_USERS_KEY);
+        return raw ? JSON.parse(raw) : [];
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function saveCachedUsers(users) {
+      try {
+        localStorage.setItem(CACHE_USERS_KEY, JSON.stringify(users));
+      } catch (e) {}
+    }
+
+    function getCachedLogsMap() {
+      try {
+        const raw = localStorage.getItem(CACHE_LOGS_KEY);
+        return raw ? JSON.parse(raw) : {};
+      } catch (e) {
+        return {};
+      }
+    }
+
+    function saveCachedLogsMap(map) {
+      try {
+        localStorage.setItem(CACHE_LOGS_KEY, JSON.stringify(map));
+      } catch (e) {}
+    }
+
+    function getCachedStats() {
+      try {
+        const raw = localStorage.getItem(CACHE_STATS_KEY);
+        return raw ? JSON.parse(raw) : null;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function saveCachedStats(stats) {
+      try {
+        localStorage.setItem(CACHE_STATS_KEY, JSON.stringify(stats));
+      } catch (e) {}
+    }
+
     function init() {
+      allUsers = getCachedUsers();
+      const cachedStats = getCachedStats();
+      if (cachedStats) {
+        el.statUsers.textContent = Number(cachedStats.totalUsers || 0).toLocaleString();
+        el.statMessages.textContent = Number(cachedStats.totalMessages || 0).toLocaleString();
+        el.statTokens.textContent = Number(cachedStats.totalTokens || 0).toLocaleString();
+        el.statBlocked.textContent = Number(cachedStats.blockedCount || 0).toLocaleString();
+      }
+
       if (currentAdminKey) {
         showDashboard();
       } else {
@@ -1031,6 +1089,7 @@
       el.disguiseScreen.classList.add('hidden');
       el.authModal.classList.add('hidden');
       el.adminDashboard.classList.remove('hidden');
+      renderUserList();
       loadAllData();
     }
 
@@ -1099,8 +1158,24 @@
           headers: { 'x-admin-key': currentAdminKey }
         });
         if (res.ok) {
+          localStorage.removeItem(CACHE_USERS_KEY);
+          localStorage.removeItem(CACHE_LOGS_KEY);
+          localStorage.removeItem(CACHE_STATS_KEY);
+          allUsers = [];
           selectedUserKey = null;
-          loadAllData();
+          el.statUsers.textContent = '0';
+          el.statMessages.textContent = '0';
+          el.statTokens.textContent = '0';
+          el.statBlocked.textContent = '0';
+          renderUserList();
+          el.chatTargetHeader.classList.add('hidden');
+          el.messagesContainer.innerHTML = `
+            <div class="empty-state" id="emptyChatPlaceholder">
+              <div class="empty-icon">👈</div>
+              <div class="empty-title">Chưa chọn người dùng</div>
+              <div class="empty-desc">Hãy bấm vào một người dùng ở danh sách bên trái để xem chi tiết lịch sử tin nhắn!</div>
+            </div>
+          `;
         }
       } catch (e) {}
     });
@@ -1131,12 +1206,54 @@
         }
 
         const stats = await statsRes.json();
-        el.statUsers.textContent = Number(stats.totalUsers || 0).toLocaleString();
-        el.statMessages.textContent = Number(stats.totalMessages || 0).toLocaleString();
-        el.statTokens.textContent = Number(stats.totalTokens || 0).toLocaleString();
-        el.statBlocked.textContent = Number(stats.blockedCount || 0).toLocaleString();
+        const remoteUsers = await usersRes.json();
 
-        allUsers = await usersRes.json();
+        const cachedUsers = getCachedUsers();
+        const userMap = new Map();
+        for (const u of cachedUsers) {
+          userMap.set(u.userKey, { ...u });
+        }
+        for (const u of remoteUsers) {
+          if (!userMap.has(u.userKey)) {
+            userMap.set(u.userKey, { ...u });
+          } else {
+            const existing = userMap.get(u.userKey);
+            existing.messageCount = Math.max(existing.messageCount || 0, u.messageCount || 0);
+            existing.totalTokens = Math.max(existing.totalTokens || 0, u.totalTokens || 0);
+            existing.lastSeen = Math.max(existing.lastSeen || 0, u.lastSeen || 0);
+            existing.device = u.device || existing.device;
+            if (typeof u.isBlocked === 'boolean') {
+              existing.isBlocked = u.isBlocked;
+            }
+          }
+        }
+
+        allUsers = Array.from(userMap.values()).sort((a, b) => b.lastSeen - a.lastSeen);
+        saveCachedUsers(allUsers);
+
+        const computedTotalTokens = allUsers.reduce((sum, u) => sum + (u.totalTokens || 0), 0);
+        const computedTotalMessages = allUsers.reduce((sum, u) => sum + (u.messageCount || 0), 0);
+        const finalStats = {
+          totalUsers: Math.max(allUsers.length, stats.totalUsers || 0),
+          totalMessages: Math.max(computedTotalMessages, stats.totalMessages || 0),
+          totalTokens: Math.max(computedTotalTokens, stats.totalTokens || 0),
+          blockedCount: allUsers.filter(u => u.isBlocked).length
+        };
+        saveCachedStats(finalStats);
+
+        el.statUsers.textContent = Number(finalStats.totalUsers).toLocaleString();
+        el.statMessages.textContent = Number(finalStats.totalMessages).toLocaleString();
+        el.statTokens.textContent = Number(finalStats.totalTokens).toLocaleString();
+        el.statBlocked.textContent = Number(finalStats.blockedCount).toLocaleString();
+
+        if (el.dbBadge) {
+          if (stats.hasCloudDb) {
+            el.dbBadge.innerHTML = '<span class="live-dot" style="background:#10b981;box-shadow:0 0 8px #10b981;"></span><span style="color:#34d399;">Cloud KV (Lưu vĩnh viễn)</span>';
+          } else {
+            el.dbBadge.innerHTML = '<span class="live-dot" style="background:#f59e0b;box-shadow:0 0 8px #f59e0b;"></span><span style="color:#fbbf24;">Lưu đệm đa tầng</span>';
+          }
+        }
+
         renderUserList();
 
         if (selectedUserKey) {
@@ -1228,17 +1345,40 @@
           });
           if (res.ok) {
             user.isBlocked = action === 'block';
+            saveCachedUsers(allUsers);
+            renderUserList();
             loadAllData();
           }
         } catch (e) {}
       };
 
+      const logsMap = getCachedLogsMap();
+      const cachedLogs = logsMap[userKey] || [];
+      if (cachedLogs.length > 0) {
+        renderMessages(cachedLogs);
+      }
+
       try {
         const res = await fetch(`/api/admin/logs?userKey=${encodeURIComponent(userKey)}`, {
           headers: { 'x-admin-key': currentAdminKey }
         });
-        const logs = await res.json();
-        renderMessages(logs);
+        const remoteLogs = await res.json();
+
+        const mergedMap = new Map();
+        for (const l of cachedLogs) {
+          const id = l.id || `${l.timestamp}_${l.userMessage}`;
+          mergedMap.set(id, l);
+        }
+        for (const l of remoteLogs) {
+          const id = l.id || `${l.timestamp}_${l.userMessage}`;
+          mergedMap.set(id, l);
+        }
+
+        const mergedLogs = Array.from(mergedMap.values()).sort((a, b) => b.timestamp - a.timestamp);
+        logsMap[userKey] = mergedLogs;
+        saveCachedLogsMap(logsMap);
+
+        renderMessages(mergedLogs);
       } catch (e) {
         console.error('Lỗi tải tin nhắn:', e);
       }
@@ -1261,7 +1401,7 @@
         const dateStr = new Date(log.timestamp).toLocaleString('vi-VN');
         const pTok = log.tokens?.promptTokens || 0;
         const cTok = log.tokens?.completionTokens || 0;
-        const totTok = log.tokens?.totalTokens || (pTok + cTok);
+        const totTok = log.tokens?.totalTokens || (typeof log.tokens === 'number' ? log.tokens : (pTok + cTok));
 
         return `
           <div class="msg-group">
@@ -1277,7 +1417,7 @@
               <div class="msg-sender sender-adudu">
                 <span>👽 Adudu</span>
               </div>
-              <div class="msg-bubble bubble-adudu">${escapeHtml(log.botResponse || '')}</div>
+              <div class="msg-bubble bubble-adudu">${escapeHtml(log.botResponse || log.botReply || '')}</div>
               <div class="token-breakdown">
                 <span>Đầu vào: ${pTok} tok</span>
                 <span>•</span>

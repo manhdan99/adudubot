@@ -88,6 +88,14 @@ function parseDevice(ua = '') {
   return `${os} • ${browser}`;
 }
 
+function getKvConfig() {
+  let url = (process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL || '').trim();
+  const token = (process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN || '').trim();
+  if (!url || !token) return null;
+  url = url.replace(/\/+$/, '');
+  return { url, token };
+}
+
 async function recordChatLog(entry) {
   chatLogs.unshift(entry);
   if (chatLogs.length > 2000) {
@@ -95,40 +103,46 @@ async function recordChatLog(entry) {
   }
   saveLocalLogs();
 
-  const kvUrl = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
-  const kvToken = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
-  if (kvUrl && kvToken) {
+  const kv = getKvConfig();
+  if (kv) {
     try {
-      await fetch(`${kvUrl}/lpush/adudu_logs`, {
+      await fetch(`${kv.url}/pipeline`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${kvToken}`,
+          'Authorization': `Bearer ${kv.token}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(entry)
-      });
-      await fetch(`${kvUrl}/ltrim/adudu_logs/0/2000`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${kvToken}` }
+        body: JSON.stringify([
+          ['LPUSH', 'adudu_logs', JSON.stringify(entry)],
+          ['LTRIM', 'adudu_logs', 0, 2000]
+        ])
       });
     } catch (e) {}
   }
 }
 
 async function getAllLogs() {
-  const kvUrl = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
-  const kvToken = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
-  if (kvUrl && kvToken) {
+  const kv = getKvConfig();
+  if (kv) {
     try {
-      const res = await fetch(`${kvUrl}/lrange/adudu_logs/0/1000`, {
-        headers: { 'Authorization': `Bearer ${kvToken}` }
+      const res = await fetch(kv.url, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${kv.token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(['LRANGE', 'adudu_logs', 0, 1000])
       });
       if (res.ok) {
         const data = await res.json();
         if (data.result && Array.isArray(data.result)) {
           return data.result.map(item => {
-            return typeof item === 'string' ? JSON.parse(item) : item;
-          });
+            try {
+              return typeof item === 'string' ? JSON.parse(item) : item;
+            } catch (e) {
+              return null;
+            }
+          }).filter(Boolean);
         }
       }
     } catch (e) {}
@@ -144,16 +158,49 @@ async function blockTarget(target, action) {
   }
   saveLocalBlocked();
 
-  const kvUrl = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
-  const kvToken = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
-  if (kvUrl && kvToken) {
+  const kv = getKvConfig();
+  if (kv) {
     try {
-      const cmd = action === 'block' ? 'sadd' : 'srem';
-      await fetch(`${kvUrl}/${cmd}/adudu_blocked/${encodeURIComponent(target)}`, {
-        headers: { 'Authorization': `Bearer ${kvToken}` }
+      const cmd = action === 'block' ? 'SADD' : 'SREM';
+      await fetch(kv.url, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${kv.token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify([cmd, 'adudu_blocked', target])
       });
     } catch (e) {}
   }
+}
+
+async function isUserBlocked(ip, clientId) {
+  if (blockedSet.has(ip) || (clientId && blockedSet.has(clientId))) {
+    return true;
+  }
+  const kv = getKvConfig();
+  if (kv) {
+    try {
+      const res = await fetch(kv.url, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${kv.token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(['SMEMBERS', 'adudu_blocked'])
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.result && Array.isArray(data.result)) {
+          data.result.forEach(item => blockedSet.add(item));
+          if (blockedSet.has(ip) || (clientId && blockedSet.has(clientId))) {
+            return true;
+          }
+        }
+      }
+    } catch (e) {}
+  }
+  return false;
 }
 
 function verifyAdminAuth(req, res, next) {
@@ -217,11 +264,12 @@ function getUserRecord(key) {
   return record;
 }
 
-function rateAndTokenLimitMiddleware(req, res, next) {
+async function rateAndTokenLimitMiddleware(req, res, next) {
   const ip = getClientIp(req);
   const clientId = (req.headers['x-client-id'] || req.query.client_id || '').toString().trim();
 
-  if (blockedSet.has(ip) || (clientId && blockedSet.has(clientId))) {
+  const blocked = await isUserBlocked(ip, clientId);
+  if (blocked) {
     return res.status(403).json({
       error: 'm bị adudu đá rồi,thời gian nhắn cho adudu mày mua cho ông bà già mày hộp sữa con lợn ạ hahahahh',
       aduduJoke: 'Hahaha! m bị adudu đá rồi,thời gian nhắn cho adudu mày mua cho ông bà già mày hộp sữa con lợn ạ hahahahh',
@@ -469,21 +517,23 @@ app.post(['/api/chat', '/chat'], rateAndTokenLimitMiddleware, async (req, res) =
     }
 
     const latestUserMsg = recentMessages.filter(m => m.role === 'user').pop()?.content || '';
-    recordChatLog({
-      id: 'log_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
-      timestamp: Date.now(),
-      ip: getClientIp(req),
-      clientId: (req.headers['x-client-id'] || req.query.client_id || '').toString().trim() || 'an_danh',
-      device: parseDevice(req.headers['user-agent']),
-      userMessage: latestUserMsg,
-      botResponse: fullResponseText,
-      tokens: {
-        promptTokens: calculatedPromptTokens,
-        completionTokens: calculatedCompletionTokens,
-        totalTokens: calculatedTotalTokens
-      },
-      model
-    });
+    try {
+      await recordChatLog({
+        id: 'log_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
+        timestamp: Date.now(),
+        ip: getClientIp(req),
+        clientId: (req.headers['x-client-id'] || req.query.client_id || '').toString().trim() || 'an_danh',
+        device: parseDevice(req.headers['user-agent']),
+        userMessage: latestUserMsg,
+        botResponse: fullResponseText,
+        tokens: {
+          promptTokens: calculatedPromptTokens,
+          completionTokens: calculatedCompletionTokens,
+          totalTokens: calculatedTotalTokens
+        },
+        model
+      });
+    } catch (e) {}
 
     res.write('data: [DONE]\n\n');
     res.end();
@@ -594,6 +644,7 @@ app.get('/api/admin/stats', verifyAdminAuth, async (req, res) => {
     totalTokens,
     totalUsers: userMap.size,
     blockedCount: blockedSet.size,
+    hasCloudDb: Boolean(getKvConfig()),
     model: (process.env.LLM_MODEL || 'qwen/qwen3.8-27b')
   });
 });
