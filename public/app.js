@@ -217,7 +217,7 @@ async function fetchAndDisplayQuota() {
     const data = await res.json();
 
     if (DOM.headerQuotaText) {
-      DOM.headerQuotaText.textContent = `${data.requestsRemaining}/${data.maxRequests} lượt`;
+      DOM.headerQuotaText.innerHTML = `${data.requestsRemaining}/${data.maxRequests}<span class="quota-unit"> lượt</span>`;
     }
 
     if (DOM.headerQuotaPill) {

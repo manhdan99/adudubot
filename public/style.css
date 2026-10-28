@@ -1225,8 +1225,12 @@ html, body {
     top: 0;
     bottom: 0;
     left: 0;
+    width: min(300px, 82vw);
     transform: translateX(-100%);
     box-shadow: 4px 0 24px rgba(0, 0, 0, 0.4);
+    padding-top: env(safe-area-inset-top, 0);
+    padding-bottom: env(safe-area-inset-bottom, 0);
+    -webkit-overflow-scrolling: touch;
   }
 
   .sidebar.open {
@@ -1249,48 +1253,227 @@ html, body {
   }
 
   .main-header {
-    padding: 0 14px;
+    padding: 0 10px;
+    height: 52px;
+    padding-top: env(safe-area-inset-top, 0);
+    gap: 8px;
+  }
+
+  .header-left {
+    flex: 1;
+    min-width: 0;
+    gap: 8px;
   }
 
   .chat-title-header {
-    max-width: 160px;
-    font-size: 0.95rem;
+    font-size: 0.92rem;
+    max-width: none;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .header-right {
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  .quota-pill {
+    padding: 4px 8px;
+    font-size: 0.74rem;
   }
 
   .toggle-pill-text {
-    display: none; 
+    display: none;
   }
 
   .toggle-pill {
     padding: 6px 8px;
+    min-width: 32px;
+    min-height: 32px;
+    justify-content: center;
+  }
+
+  .toggle-pill-thumb svg {
+    width: 15px;
+    height: 15px;
+  }
+
+  .welcome-screen {
+    padding: 24px 12px 16px;
+  }
+
+  .welcome-avatar-wrap {
+    width: 64px;
+    height: 64px;
+    margin-bottom: 12px;
+  }
+
+  .welcome-title {
+    font-size: 1.75rem;
+  }
+
+  .welcome-greeting {
+    font-size: 0.92rem;
+    margin-bottom: 18px;
   }
 
   .suggestion-grid {
     grid-template-columns: 1fr;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .suggestion-card {
+    padding: 10px 14px;
+    min-height: 44px;
+    font-size: 0.88rem;
+  }
+
+  .messages-viewport {
+    padding: 0;
   }
 
   .messages-column {
-    padding: 20px 14px 28px;
+    padding: 14px 10px 20px;
+  }
+
+  .msg-user {
+    padding-left: 20px;
+    margin-bottom: 14px;
   }
 
   .user-bubble-box {
-    max-width: 90%;
+    max-width: 88%;
+    padding: 9px 13px;
+    font-size: 0.94rem;
+    border-radius: 18px 18px 4px 18px;
+  }
+
+  .msg-bot {
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .bot-avatar-col {
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+  }
+
+  .bot-text-body {
+    font-size: 0.95rem;
+    line-height: 1.6;
   }
 
   .bot-action-row {
-    opacity: 1; 
+    opacity: 1;
+    margin-top: 6px;
+    gap: 6px;
+  }
+
+  .btn-msg-tool {
+    padding: 6px;
+    min-width: 30px;
+    min-height: 30px;
   }
 
   .input-section {
-    padding: 0 12px 12px;
+    padding: 0 10px max(10px, env(safe-area-inset-bottom, 10px));
+  }
+
+  .input-form {
+    padding: 7px 10px 7px 14px;
+    border-radius: 20px;
+  }
+
+  .message-textarea {
+    font-size: 16px;
+    line-height: 1.45;
+    min-height: 22px;
+    max-height: 110px;
+  }
+
+  .btn-action-send {
+    width: 34px;
+    height: 34px;
+    min-width: 34px;
+    min-height: 34px;
+  }
+
+  .btn-scroll-down {
+    bottom: 8px;
+    width: 32px;
+    height: 32px;
+  }
+
+  .popup-card {
+    width: 92%;
+    max-width: 360px;
   }
 
   .popup-avatar-wrap {
-    width: 120px;
-    height: 120px;
+    width: 90px;
+    height: 90px;
+    margin-bottom: 10px;
+  }
+
+  .popup-speech-bubble {
+    padding: 16px;
+    border-radius: 16px;
+    max-height: 52vh;
   }
 
   .speech-text {
-    font-size: 1rem;
+    font-size: 0.96rem;
+    line-height: 1.55;
+  }
+
+  .popup-actions {
+    margin-top: 12px;
+  }
+
+  .dialog-card {
+    width: calc(100% - 24px);
+    max-width: 380px;
+    max-height: 85vh;
+    overflow-y: auto;
+    border-radius: 14px;
+  }
+
+  .dialog-header {
+    padding: 12px 16px;
+  }
+
+  .dialog-body {
+    padding: 16px;
+    gap: 16px;
+  }
+
+  .setting-name {
+    font-size: 0.9rem;
+  }
+
+  .setting-hint {
+    font-size: 0.78rem;
+  }
+}
+
+@media (max-width: 420px) {
+  .quota-unit {
+    display: none;
+  }
+
+  .quota-pill {
+    padding: 3px 6px;
+  }
+
+  .header-right {
+    gap: 4px;
+  }
+
+  .main-header {
+    padding: 0 8px;
   }
 }
