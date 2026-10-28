@@ -3,11 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AduduBot Admin • VUA manhdan99</title>
-  <link rel="icon" type="image/png" href="assets/adudu.png">
+  <title>Trang không tồn tại</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Be+Vietnam+Pro:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
       --bg: #0b0f19;
@@ -20,8 +19,6 @@
       --warning: #f59e0b;
       --text: #f3f4f6;
       --text-muted: #9ca3af;
-      --bubble-user: #1e3a8a;
-      --bubble-bot: #064e3b;
     }
     * {
       box-sizing: border-box;
@@ -39,65 +36,91 @@
     .hidden {
       display: none !important;
     }
-    .login-container {
+    .disguise-view {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      color: #6b7280;
+      user-select: none;
+    }
+    .disguise-text {
+      font-size: 16px;
+      font-weight: 400;
+      letter-spacing: 0.5px;
+    }
+    .secret-crown-trigger {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: rgba(31, 41, 55, 0.6);
+      border: 1px solid rgba(75, 85, 99, 0.4);
       display: flex;
       align-items: center;
       justify-content: center;
-      min-height: 100vh;
+      font-size: 20px;
+      cursor: pointer;
+      opacity: 0.35;
+      transition: all 0.3s ease;
+      z-index: 100;
+      backdrop-filter: blur(4px);
+    }
+    .secret-crown-trigger:hover {
+      opacity: 1;
+      transform: scale(1.1);
+      border-color: #f59e0b;
+      box-shadow: 0 0 15px rgba(245, 158, 11, 0.3);
+      background: rgba(31, 41, 55, 0.9);
+    }
+    .modal-backdrop {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(6px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
       padding: 20px;
     }
-    .login-card {
+    .modal-card {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
       border-radius: 16px;
-      padding: 36px 28px;
+      padding: 30px 24px;
       width: 100%;
-      max-width: 440px;
+      max-width: 380px;
       text-align: center;
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+      animation: modalFadeIn 0.2s ease-out;
     }
-    .login-avatar {
-      width: 80px;
-      height: 80px;
-      border-radius: 50%;
-      margin: 0 auto 16px;
-      border: 3px solid var(--accent);
-      box-shadow: 0 0 20px var(--accent-glow);
-      display: block;
+    @keyframes modalFadeIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
     }
-    .login-title {
-      font-family: 'Bangers', cursive;
-      font-size: 28px;
-      letter-spacing: 1px;
-      color: #34d399;
-      margin-bottom: 6px;
-    }
-    .login-subtitle {
-      color: var(--text-muted);
-      font-size: 14px;
-      margin-bottom: 24px;
-    }
-    .login-badge {
+    .modal-icon {
+      font-size: 32px;
+      margin-bottom: 12px;
       display: inline-block;
-      background: rgba(245, 158, 11, 0.15);
-      color: #fbbf24;
-      border: 1px solid rgba(245, 158, 11, 0.3);
-      padding: 4px 10px;
-      border-radius: 20px;
-      font-size: 12px;
-      font-weight: 600;
-      margin-bottom: 20px;
     }
-    .form-group {
-      margin-bottom: 18px;
-      text-align: left;
-    }
-    .form-group label {
-      display: block;
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--text-muted);
+    .modal-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #fff;
       margin-bottom: 6px;
+    }
+    .modal-sub {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 20px;
     }
     .form-input {
       width: 100%;
@@ -106,35 +129,54 @@
       border: 1px solid #374151;
       border-radius: 8px;
       color: #fff;
-      font-size: 15px;
+      font-size: 14px;
       outline: none;
       transition: all 0.2s;
+      margin-bottom: 14px;
     }
     .form-input:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 2px var(--accent-glow);
+      border-color: #f59e0b;
+      box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.2);
     }
-    .btn-login {
-      width: 100%;
-      padding: 12px;
-      background: var(--accent);
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+    }
+    .btn-submit {
+      flex: 1;
+      padding: 11px;
+      background: #f59e0b;
       color: #000;
       font-weight: 700;
-      font-size: 15px;
+      font-size: 14px;
       border: none;
       border-radius: 8px;
       cursor: pointer;
       transition: all 0.2s;
     }
-    .btn-login:hover {
-      background: #059669;
+    .btn-submit:hover {
+      background: #d97706;
       color: #fff;
+    }
+    .btn-cancel {
+      padding: 11px 16px;
+      background: #1f2937;
+      color: var(--text-muted);
+      font-size: 14px;
+      font-weight: 500;
+      border: 1px solid #374151;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .btn-cancel:hover {
+      color: #fff;
+      background: #374151;
     }
     .login-err {
       color: var(--danger);
       font-size: 13px;
-      margin-top: 12px;
-      min-height: 20px;
+      margin-top: 10px;
+      min-height: 18px;
     }
     .admin-header {
       background: #111827;
@@ -153,25 +195,26 @@
       gap: 12px;
     }
     .brand-img {
-      width: 38px;
-      height: 38px;
+      width: 36px;
+      height: 36px;
       border-radius: 50%;
       border: 2px solid var(--accent);
     }
     .brand-title {
-      font-family: 'Bangers', cursive;
-      font-size: 22px;
-      letter-spacing: 0.5px;
+      font-size: 18px;
+      font-weight: 700;
       color: #34d399;
+      letter-spacing: 0.5px;
     }
-    .brand-vua {
-      background: #fbbf24;
-      color: #000;
+    .brand-tag {
+      background: rgba(245, 158, 11, 0.15);
+      color: #fbbf24;
       font-size: 11px;
-      font-weight: 800;
-      padding: 2px 6px;
+      font-weight: 700;
+      padding: 2px 8px;
       border-radius: 4px;
-      margin-left: 6px;
+      margin-left: 8px;
+      border: 1px solid rgba(245, 158, 11, 0.3);
     }
     .header-actions {
       display: flex;
@@ -486,19 +529,24 @@
 </head>
 <body>
 
-  <div id="loginScreen" class="login-container">
-    <div class="login-card">
-      <img src="assets/adudu.png" alt="Adudu" class="login-avatar" onerror="this.src='assets/adudu-default.svg'">
-      <div class="login-badge">👑 DÀNH RIÊNG CHO VUA MANHDAN99</div>
-      <h1 class="login-title">ADUDUBOT ADMIN</h1>
-      <p class="login-subtitle">Hệ thống theo dõi lịch sử chat & thống kê token từng người</p>
+  <div id="disguiseScreen" class="disguise-view">
+    <div class="disguise-text">Không có gì ở đây cả</div>
+    <div id="secretCrownBtn" class="secret-crown-trigger" title="Crown">👑</div>
+  </div>
+
+  <div id="authModal" class="modal-backdrop hidden">
+    <div class="modal-card">
+      <div class="modal-icon">👑</div>
+      <div class="modal-title">Xác thực quyền hạn</div>
+      <div class="modal-sub">Vui lòng nhập mật khẩu để mở giao diện quản trị</div>
       
-      <div class="form-group">
-        <label for="adminPass">Mật khẩu quản trị</label>
-        <input type="password" id="adminPass" class="form-input" placeholder="Nhập mật khẩu..." autofocus>
+      <input type="password" id="adminPass" class="form-input" placeholder="Nhập mật khẩu..." autofocus>
+      
+      <div class="modal-actions">
+        <button id="btnCancelModal" class="btn-cancel">Đóng</button>
+        <button id="btnLogin" class="btn-submit">Mở khóa</button>
       </div>
 
-      <button id="btnLogin" class="btn-login">ĐĂNG NHẬP HỆ THỐNG</button>
       <div id="loginErr" class="login-err"></div>
     </div>
   </div>
@@ -508,8 +556,8 @@
       <div class="brand-section">
         <img src="assets/adudu.png" alt="Adudu" class="brand-img" onerror="this.src='assets/adudu-default.svg'">
         <div>
-          <span class="brand-title">ADUDU ADMIN</span>
-          <span class="brand-vua">VUA MANHDAN99</span>
+          <span class="brand-title">BẢNG QUẢN TRỊ HỆ THỐNG</span>
+          <span class="brand-tag">manhdan99</span>
         </div>
       </div>
       <div class="header-actions">
@@ -523,7 +571,7 @@
           <span>🗑️</span> Xóa sạch
         </button>
         <button id="btnLogout" class="btn-header" title="Đăng xuất">
-          <span>🚪</span> Thoát
+          <span>🚪</span> Đóng
         </button>
       </div>
     </header>
@@ -555,7 +603,7 @@
       <div class="workspace">
         <div class="panel">
           <div class="panel-header">
-            <span class="panel-title">👥 Danh sách người dùng</span>
+            <span class="panel-title">👥 Danh sách thiết bị / IP</span>
             <input type="text" id="userSearch" class="search-input" placeholder="Lọc IP / máy...">
           </div>
           <div class="user-list" id="userListContainer">
@@ -597,11 +645,14 @@
     let selectedUserKey = null;
 
     const el = {
-      loginScreen: document.getElementById('loginScreen'),
-      adminDashboard: document.getElementById('adminDashboard'),
+      disguiseScreen: document.getElementById('disguiseScreen'),
+      secretCrownBtn: document.getElementById('secretCrownBtn'),
+      authModal: document.getElementById('authModal'),
+      btnCancelModal: document.getElementById('btnCancelModal'),
       adminPass: document.getElementById('adminPass'),
       btnLogin: document.getElementById('btnLogin'),
       loginErr: document.getElementById('loginErr'),
+      adminDashboard: document.getElementById('adminDashboard'),
       btnLogout: document.getElementById('btnLogout'),
       btnRefresh: document.getElementById('btnRefresh'),
       btnExport: document.getElementById('btnExport'),
@@ -624,36 +675,56 @@
       if (currentAdminKey) {
         showDashboard();
       } else {
-        showLogin();
+        showDisguise();
       }
     }
 
-    function showLogin() {
-      el.loginScreen.classList.remove('hidden');
+    function showDisguise() {
+      document.title = 'Trang không tồn tại';
+      el.disguiseScreen.classList.remove('hidden');
+      el.authModal.classList.add('hidden');
       el.adminDashboard.classList.add('hidden');
+    }
+
+    function openModal() {
+      el.authModal.classList.remove('hidden');
       el.adminPass.value = '';
       el.loginErr.textContent = '';
-      el.adminPass.focus();
+      setTimeout(() => el.adminPass.focus(), 100);
+    }
+
+    function closeModal() {
+      el.authModal.classList.add('hidden');
     }
 
     function showDashboard() {
-      el.loginScreen.classList.add('hidden');
+      document.title = 'Bảng Quản Trị • AduduBot';
+      el.disguiseScreen.classList.add('hidden');
+      el.authModal.classList.add('hidden');
       el.adminDashboard.classList.remove('hidden');
       loadAllData();
     }
 
+    el.secretCrownBtn.addEventListener('click', openModal);
+    el.btnCancelModal.addEventListener('click', closeModal);
+
+    el.authModal.addEventListener('click', (e) => {
+      if (e.target === el.authModal) closeModal();
+    });
+
     el.btnLogin.addEventListener('click', handleLogin);
     el.adminPass.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') handleLogin();
+      if (e.key === 'Escape') closeModal();
     });
 
     async function handleLogin() {
       const pass = el.adminPass.value.trim();
       if (!pass) {
-        el.loginErr.textContent = 'Vui lòng nhập mật khẩu quản trị!';
+        el.loginErr.textContent = 'Vui lòng nhập mật khẩu!';
         return;
       }
-      el.btnLogin.textContent = 'Đang kiểm tra...';
+      el.btnLogin.textContent = 'Đang mở...';
       el.loginErr.textContent = '';
 
       try {
@@ -671,16 +742,16 @@
           el.loginErr.textContent = data.error || 'Sai mật khẩu!';
         }
       } catch (err) {
-        el.loginErr.textContent = 'Không kết nối được đến máy chủ!';
+        el.loginErr.textContent = 'Lỗi kết nối máy chủ!';
       } finally {
-        el.btnLogin.textContent = 'ĐĂNG NHẬP HỆ THỐNG';
+        el.btnLogin.textContent = 'Mở khóa';
       }
     }
 
     el.btnLogout.addEventListener('click', () => {
       sessionStorage.removeItem(AUTH_KEY);
       currentAdminKey = '';
-      showLogin();
+      showDisguise();
     });
 
     el.btnRefresh.addEventListener('click', () => {
@@ -692,7 +763,7 @@
     });
 
     el.btnClear.addEventListener('click', async () => {
-      if (!confirm('Bạn có chắc chắn muốn XÓA TOÀN BỘ lịch sử chat trên hệ thống không?')) return;
+      if (!confirm('Bạn có chắc muốn XÓA TOÀN BỘ dữ liệu lịch sử chat không?')) return;
       try {
         const res = await fetch('/api/admin/logs', {
           method: 'DELETE',
@@ -766,7 +837,7 @@
             </div>
             <div class="user-device">💻 ${escapeHtml(u.device || 'Thiết bị lạ')}</div>
             <div class="user-meta">
-              <span>💬 ${u.messageCount} câu hỏi</span>
+              <span>💬 ${u.messageCount} câu</span>
               <span class="token-pill">⚡ ${Number(u.totalTokens || 0).toLocaleString()} tokens</span>
               <span>${timeStr}</span>
             </div>
