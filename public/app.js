@@ -62,6 +62,8 @@ const DOM = {
 
   // Header
   currentChatTitle: document.getElementById('currentChatTitle'),
+  headerQuotaPill: document.getElementById('headerQuotaPill'),
+  headerQuotaText: document.getElementById('headerQuotaText'),
   headerTogglePopup: document.getElementById('headerTogglePopup'),
   headerToggleSpeech: document.getElementById('headerToggleSpeech'),
 
@@ -99,6 +101,7 @@ const DOM = {
   speechRateRange: document.getElementById('speechRateRange'),
   speechRateLabel: document.getElementById('speechRateLabel'),
   currentModelBadge: document.getElementById('currentModelBadge'),
+  settingQuotaHint: document.getElementById('settingQuotaHint'),
   btnClearAllHistory: document.getElementById('btnClearAllHistory'),
 
   // Modal Xác nhận
@@ -224,6 +227,54 @@ function escapeHTML(str) {
   const p = document.createElement('p');
   p.textContent = str;
   return p.innerHTML;
+}
+
+/**
+ * Định danh duy nhất cho từng trình duyệt/tab người dùng để quản lý hạn mức riêng biệt
+ */
+function getClientId() {
+  let id = localStorage.getItem('adudu_client_id');
+  if (!id) {
+    id = 'c_' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+    localStorage.setItem('adudu_client_id', id);
+  }
+  return id;
+}
+
+/**
+ * Lấy và cập nhật thông tin hạn ngạch Request & Token còn lại của người dùng
+ */
+async function fetchAndDisplayQuota() {
+  try {
+    const clientId = getClientId();
+    const res = await fetch(`${API_BASE_URL}/api/quota?client_id=${encodeURIComponent(clientId)}`, {
+      headers: { 'X-Client-Id': clientId }
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+
+    if (DOM.headerQuotaText) {
+      DOM.headerQuotaText.textContent = `${data.requestsRemaining}/${data.maxRequests} lượt`;
+    }
+
+    if (DOM.headerQuotaPill) {
+      DOM.headerQuotaPill.title = `Bạn còn ${data.requestsRemaining}/${data.maxRequests} lượt hỏi và ${data.tokensRemaining}/${data.maxTokens} token trong giờ này (Hồi sau ${data.resetInMinutes} phút)`;
+      DOM.headerQuotaPill.classList.remove('low', 'exceeded');
+
+      if (data.requestsRemaining === 0 || data.tokensRemaining === 0) {
+        DOM.headerQuotaPill.classList.add('exceeded');
+        DOM.headerQuotaText.textContent = 'Hết hạn mức!';
+      } else if (data.requestsRemaining <= 5 || data.tokensRemaining < 1000) {
+        DOM.headerQuotaPill.classList.add('low');
+      }
+    }
+
+    if (DOM.settingQuotaHint) {
+      DOM.settingQuotaHint.textContent = `Lượt hỏi: ${data.requestsRemaining}/${data.maxRequests} | Token: ${data.tokensRemaining}/${data.maxTokens} (Hồi sau ${data.resetInMinutes}p)`;
+    }
+  } catch (e) {
+    console.warn('Lỗi lấy quota:', e);
+  }
 }
 
 /**
@@ -676,7 +727,8 @@ async function sendMessage(userText) {
     const response = await fetch(`${API_BASE_URL}/api/chat`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'X-Client-Id': getClientId()
       },
       body: JSON.stringify({
         messages: recentMessages
@@ -686,7 +738,11 @@ async function sendMessage(userText) {
 
     if (!response.ok) {
       const errData = await response.json().catch(() => ({}));
-      throw new Error(errData.error || `HTTP ${response.status}: Lỗi máy chủ`);
+      const customErr = new Error(errData.error || `HTTP ${response.status}: Lỗi máy chủ`);
+      customErr.status = response.status;
+      customErr.aduduJoke = errData.aduduJoke;
+      customErr.code = errData.code;
+      throw customErr;
     }
 
     const reader = response.body.getReader();
@@ -776,31 +832,43 @@ async function sendMessage(userText) {
         detailMsg = 'Không kết nối được server backend! Hãy chắc chắn server đang chạy lệnh "npm start" (http://localhost:3000).';
       }
 
-      const errorJoke = "Hahaha! Tao đang nói thì đứt cáp rồi! Đám loài người các mày mau kiểm tra lại mạng đi!";
+      const isLimitError = err.status === 429;
+      let joke = isLimitError ? err.message : (err.aduduJoke || "Hahaha! Tao đang nói thì đứt cáp rồi! Đám loài người các mày mau kiểm tra lại mạng đi!");
+      if (isLimitError) {
+        detailMsg = 'Đã chạm giới hạn yêu cầu hoặc token của người dùng (Rate/Token Limit)';
+      }
       const banner = document.createElement('div');
       banner.className = 'bot-error-banner';
       banner.innerHTML = `
-        <div class="error-joke">${escapeHTML(errorJoke)}</div>
-        <div class="error-tech-detail">Chi tiết lỗi: ${escapeHTML(detailMsg)}</div>
-        <button class="btn-retry">Thử lại</button>
+        <div class="error-joke">${escapeHTML(joke)}</div>
+        <div class="error-tech-detail">Chi tiết: ${escapeHTML(detailMsg)}</div>
+        ${!isLimitError ? '<button class="btn-retry">Thử lại</button>' : ''}
       `;
 
-      banner.querySelector('.btn-retry').addEventListener('click', () => {
-        banner.remove();
-        botRow.remove();
-        sendMessage(userText);
-      });
+      const btnRetry = banner.querySelector('.btn-retry');
+      if (btnRetry) {
+        btnRetry.addEventListener('click', () => {
+          banner.remove();
+          botRow.remove();
+          sendMessage(userText);
+        });
+      }
 
       botRow.querySelector('.bot-content-col').appendChild(banner);
 
       if (state.settings.showPopup) {
-        DOM.popupSpeechText.textContent = `${errorJoke}\n\n(Lỗi: ${detailMsg})`;
+        DOM.popupSpeechText.textContent = `${joke}\n\n(${detailMsg})`;
+      }
+
+      if (state.settings.enableSpeech && isLimitError) {
+        speakText(joke);
       }
     }
   } finally {
     setStreamingState(false);
     DOM.messageInput.disabled = false;
     DOM.messageInput.focus();
+    fetchAndDisplayQuota();
   }
 }
 
@@ -923,7 +991,7 @@ document.addEventListener('DOMContentLoaded', () => {
   DOM.speechRateRange.value = state.settings.speechRate || 1.05;
   DOM.speechRateLabel.textContent = `${(state.settings.speechRate || 1.05).toFixed(2)}x`;
 
-  // Tải thông tin model từ server
+  // Tải thông tin model và hạn mức từ server
   fetch(`${API_BASE_URL}/api/info`)
     .then(r => r.json())
     .then(data => {
@@ -932,6 +1000,10 @@ document.addEventListener('DOMContentLoaded', () => {
     .catch(() => {
       DOM.currentModelBadge.textContent = 'Mặc định (Groq / Cerebras)';
     });
+
+  // Tải thông tin hạn ngạch người dùng
+  fetchAndDisplayQuota();
+  setInterval(fetchAndDisplayQuota, 30000);
 
   // 1. Nhập và gửi tin nhắn
   DOM.chatForm.addEventListener('submit', (e) => {

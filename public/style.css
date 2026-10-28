@@ -352,6 +352,37 @@ html, body {
   gap: 10px;
 }
 
+/* Huy hiệu hạn mức người dùng (Quota Pill) */
+.quota-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  cursor: default;
+  transition: border-color var(--transition-fast), color var(--transition-fast);
+}
+
+.quota-pill .quota-icon {
+  color: var(--accent);
+  font-size: 0.85rem;
+}
+
+.quota-pill.low {
+  border-color: rgba(255, 152, 0, 0.45);
+  color: #ffb74d;
+}
+
+.quota-pill.exceeded {
+  border-color: rgba(244, 67, 54, 0.5);
+  color: #ef5350;
+}
+
 /* Công tắc dạng pill trên Header */
 .toggle-pill {
   display: inline-flex;

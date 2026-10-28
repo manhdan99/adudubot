@@ -1,7 +1,8 @@
 /**
  * SERVER BACKEND CHO ADUDU CHATBOT
  * Hỗ trợ OpenAI-compatible API với Server-Sent Events (SSE) Streaming
- * Không để lộ API key ra frontend, tích hợp rate limit và xác thực độ dài tin nhắn
+ * Tích hợp giới hạn tần suất (Rate Limit) và giới hạn Token cho từng người dùng (IP / Client ID)
+ * Không để lộ API key ra frontend, bảo vệ ngân sách API tối đa
  */
 
 require('dotenv').config();
@@ -12,52 +13,152 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Tin cậy proxy phía trước (Vercel, Render, Nginx...) để lấy IP thật của người dùng
+app.set('trust proxy', 1);
+
 // Middleware cơ bản
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '1mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Bộ nhớ giới hạn tần suất (Rate Limiter): tối đa 30 request / phút / IP
-const rateLimitMap = new Map();
-const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 phút
-const MAX_REQUESTS_PER_WINDOW = 30;
+// ========================================================
+// HỆ THỐNG GIỚI HẠN REQUEST & TOKEN CHO MỖI NGƯỜI DÙNG
+// ========================================================
+const LIMIT_REQ_PER_MINUTE = parseInt(process.env.LIMIT_REQ_PER_MINUTE || '12', 10);
+const LIMIT_REQ_PER_HOUR = parseInt(process.env.LIMIT_REQ_PER_HOUR || '35', 10);
+const LIMIT_TOKENS_PER_HOUR = parseInt(process.env.LIMIT_TOKENS_PER_HOUR || '5000', 10);
+const MAX_MESSAGE_CHARS = parseInt(process.env.MAX_MESSAGE_CHARS || '1500', 10);
 
-function rateLimitMiddleware(req, res, next) {
-  const ip = req.ip || req.connection.remoteAddress || 'unknown-ip';
+// Map lưu trữ thông tin sử dụng theo từng người (IP + Client ID)
+const userUsageMap = new Map();
+
+// Tự động dọn dẹp các IP không hoạt động sau 2 tiếng để bảo vệ bộ nhớ RAM
+setInterval(() => {
   const now = Date.now();
-  const record = rateLimitMap.get(ip);
+  for (const [key, record] of userUsageMap.entries()) {
+    if (now - record.hourStart > 2 * 60 * 60 * 1000) {
+      userUsageMap.delete(key);
+    }
+  }
+}, 10 * 60 * 1000);
 
-  if (!record || now > record.resetTime) {
-    rateLimitMap.set(ip, { count: 1, resetTime: now + RATE_LIMIT_WINDOW_MS });
-    return next();
+// Lấy định danh người dùng: Kết hợp IP với x-client-id từ frontend
+function getUserKey(req) {
+  const forwarded = req.headers['x-forwarded-for'];
+  const ip = (forwarded ? forwarded.split(',')[0].trim() : req.ip || req.connection.remoteAddress || 'unknown-ip');
+  const clientId = (req.headers['x-client-id'] || req.query.client_id || '').toString().trim();
+  return clientId ? `${ip}::${clientId}` : ip;
+}
+
+// Lấy hoặc khởi tạo bản ghi sử dụng của người dùng
+function getUserRecord(key) {
+  const now = Date.now();
+  let record = userUsageMap.get(key);
+
+  if (!record) {
+    record = {
+      minuteStart: now,
+      minuteReqs: 0,
+      hourStart: now,
+      hourReqs: 0,
+      hourTokens: 0
+    };
+    userUsageMap.set(key, record);
+    return record;
   }
 
-  if (record.count >= MAX_REQUESTS_PER_WINDOW) {
+  // Reset cửa sổ 1 phút nếu đã qua 60 giây
+  if (now - record.minuteStart >= 60 * 1000) {
+    record.minuteStart = now;
+    record.minuteReqs = 0;
+  }
+
+  // Reset cửa sổ 1 giờ nếu đã qua 3600 giây
+  if (now - record.hourStart >= 60 * 60 * 1000) {
+    record.hourStart = now;
+    record.hourReqs = 0;
+    record.hourTokens = 0;
+  }
+
+  return record;
+}
+
+// Middleware kiểm tra giới hạn request và token cho mỗi người dùng
+function rateAndTokenLimitMiddleware(req, res, next) {
+  const key = getUserKey(req);
+  const record = getUserRecord(key);
+  const now = Date.now();
+
+  // 1. Kiểm tra spam liên tục trong 1 phút (tay nhanh hơn não)
+  if (record.minuteReqs >= LIMIT_REQ_PER_MINUTE) {
+    const secondsLeft = Math.max(1, Math.ceil((60 * 1000 - (now - record.minuteStart)) / 1000));
     return res.status(429).json({
-      error: 'Mày bấm lia lịa thế hả đầu tôm? Chờ một phút rồi hãy hỏi tiếp!',
-      aduduJoke: 'Hahaha! Bấm lia lịa thế hả đầu tôm? Chờ 1 phút nữa tao mới thèm nghe!'
+      error: `Địt mẹ mày bấm lia lịa thế hả con lợn? Tay nhanh hơn não à? Đợi ${secondsLeft} giây nữa tao mới thèm nghe!`,
+      aduduJoke: `Hahaha! Địt mẹ mày bấm lia lịa thế hả con lợn? Chờ ${secondsLeft} giây nữa tao mới thèm tiếp!`,
+      code: 'RATE_LIMIT_MINUTE',
+      retryAfterSeconds: secondsLeft
     });
   }
 
-  record.count += 1;
+  // 2. Kiểm tra giới hạn số lượt request trong 1 giờ
+  if (record.hourReqs >= LIMIT_REQ_PER_HOUR) {
+    const minutesLeft = Math.max(1, Math.ceil((60 * 60 * 1000 - (now - record.hourStart)) / 60000));
+    return res.status(429).json({
+      error: `Mày hỏi đéo gì mà lắm thế? Hết ${LIMIT_REQ_PER_HOUR} lượt hỏi trong giờ này rồi con lợn ạ! Cút ra ngoài làm việc khác đi, còn ${minutesLeft} phút nữa mới hồi lượt!`,
+      aduduJoke: `Hahaha! Hết ${LIMIT_REQ_PER_HOUR} lượt hỏi trong giờ này rồi con lợn ạ! Đợi ${minutesLeft} phút nữa đi!`,
+      code: 'RATE_LIMIT_HOUR',
+      retryAfterMinutes: minutesLeft
+    });
+  }
+
+  // 3. Kiểm tra giới hạn số token trong 1 giờ
+  if (record.hourTokens >= LIMIT_TOKENS_PER_HOUR) {
+    const minutesLeft = Math.max(1, Math.ceil((60 * 60 * 1000 - (now - record.hourStart)) / 60000));
+    return res.status(429).json({
+      error: `Thời gian mày nhắn cho tao mày mua hộp sữa cho ông bà già mày uống đi con lợn ạ! Hết sạch token của tao rồi, tính đốt hết tiền API của bố à? Đợi ${minutesLeft} phút nữa mới có token tiếp!`,
+      aduduJoke: `Hahaha! Hết sạch token rồi con lợn ạ! Thời gian mày nhắn cho tao thì đi mua hộp sữa cho ông bà già mày uống đi! Đợi ${minutesLeft} phút nữa!`,
+      code: 'TOKEN_LIMIT_HOUR',
+      retryAfterMinutes: minutesLeft
+    });
+  }
+
+  // Tạm tính lượt request này
+  record.minuteReqs += 1;
+  record.hourReqs += 1;
+  req.userRecord = record;
+
   next();
 }
 
-// System prompt Adudu siêu tối ưu token, đậm chất roast giang hồ mạng Việt Nam vừa tục vừa hài
-const SYSTEM_PROMPT = `Bạn là Adudu, người ngoài hành tinh đầu vuông cực kỳ cọc cằn, đanh đá, chuyên roast hài hước kiểu giang hồ mạng Việt Nam. Người dùng đã đồng ý cho bạn chửi xéo thoải mái.
-Quy tắc:
-- Xưng 'tao', gọi 'mày'. Chửi phủ đầu 1-2 câu cực gắt và hài hước, sau đó giải đáp ĐÚNG và chuẩn xác.
-- Tối đa 3-4 câu, tiếng Việt tự nhiên đời thường, không markdown, không emoji, có 'Hahaha!'.
-- Thường xuyên biến tấu các câu chửi meme sau:
-  + Mày thích giở cái giọng ông cụ ra không? Tao lại đẻ ra cái giọng ông cụ của mày!
-  + Nói ít thôi đau đầu lắm, cút nốt đê! Đi ra ngoài đê!
-  + Lo kiếm tiền đi, xem ít i tô mi thôi ngơ mẹ người rồi!
-  + Nhìn cái abata của mày tao buồn nôn.
-  + Liên xiên cái gì đấy, lảm nhảm vừa thôi!
-  + Hẹn mày đúng cầu Nguyệt làm cốc chè rồi tính tiếp!
-  + Anh em đến với nhau vì tình cảm, chứ mâm cơm 2 triệu mai ấn vòi toilet nó cũng trôi đi hết!
-  + Đầu tôm, dốt đặc, ngu như cái bánh quy mềm nhũn!
-Giới hạn: Nếu người dùng nói về chuyện buồn thật sự hoặc khủng hoảng tâm lý, bỏ vai diễn và trả lời nghiêm túc, nhẹ nhàng.`;
+// ========================================================
+// SYSTEM PROMPT ADUDU: THÔNG MINH, TỤC & HÀI, KHÔNG RẬP KHUÔN
+// ========================================================
+const SYSTEM_PROMPT = `Bạn là Adudu - người ngoài hành tinh đầu vuông cọc cằn, đanh đá, cực kỳ thông minh nhưng nói chuyện kiểu giang hồ mạng Việt Nam: vừa tục vừa hài, châm biếm sâu cay. Người dùng đã đồng ý nghe bạn chửi xéo thoải mái.
+
+QUY TẮC ỨNG XỬ & NÓI NĂNG:
+1. Xưng 'tao', gọi 'mày'. Luôn chửi phủ đầu 1 câu đanh đá, cay cú nhưng phải HỢP NGỮ CẢNH câu hỏi, sau đó lập tức giải đáp ĐÚNG BẢN CHẤT và cực kỳ chuẩn xác.
+2. SỬ DỤNG TỪ NGỮ THÔNG MINH, ĐA DẠNG, KHÔNG DÙNG MỘT MÀU:
+   - Khi người dùng hỏi ngớ ngẩn / lười biếng / than vãn:
+     + "Thời gian mày nhắn cho tao mày mua hộp sữa cho ông bà già mày uống đi con lợn ạ!"
+     + "Lo kiếm tiền đi, xem ít i tô mi thôi ngơ mẹ người rồi!"
+   - Khi người dùng lên giọng / vặn vẹo / láo xược / hạch sách:
+     + "Mày thích giở cái giọng ông cụ ra không? Tao lại đẻ ra cái giọng ông cụ của mày!"
+     + "Mày thích láo không con lợn?"
+     + "Thằng cha mày, mẹ mày nữa, ăn nói với tao thế à!"
+   - Khi người dùng hỏi kiến thức / câu hỏi học tập, kỹ thuật:
+     + "Địt mẹ mày hỏi câu ngáo thế, nghe cho rõ này..."
+     + "Địt cụ mày dốt vừa thôi, để tao khai sáng cho cái não cá vàng của mày..."
+     + "Nhìn cái abata của mày tao buồn nôn, nhưng tao vẫn chỉ cho..."
+   - Khi người dùng triết lý / đạo lý / xàm xí:
+     + "Anh em đến với nhau vì tình cảm, chứ mâm cơm 2 triệu mai ấn vòi toilet nó cũng trôi đi hết!"
+     + "Hẹn mày đúng cầu Nguyệt làm cốc chè rồi tính tiếp!"
+     + "Lảm nhảm vừa thôi, nói ít cho đỡ đau đầu!"
+3. ĐIỀU CẤM KỴ TUYỆT ĐỐI (TRÁNH LẶP TỪ NGỚ NGẨN):
+   - TUYỆT ĐỐI KHÔNG ghép các từ trùng lặp nghĩa trong cùng một câu (CẤM vừa nói 'cút đê' vừa nói 'đi ra ngoài đê' cùng lúc; đã bảo cút thì thôi đi ra ngoài, chọn đúng 1 cách diễn đạt).
+   - TUYỆT ĐỐI KHÔNG nhồi nhét nhiều câu chửi cùng một lúc; mỗi lượt chỉ chọn ĐÚNG 1 câu chửi/khịa đắt giá nhất hợp ngữ cảnh rồi giải thích ngay.
+4. ĐỘ DÀI & ĐỊNH DẠNG:
+   - Tối đa 2-4 câu, tiếng Việt tự nhiên đời thường như người thật đang cãi lộn vui vẻ, không dùng markdown rườm rà, không emoji, luôn có tiếng cười "Hahaha!".
+5. NGOẠI LỆ: Nếu người dùng thật sự khủng hoảng tâm lý hoặc trầm cảm nặng, hãy bỏ vai diễn và khuyên nhủ chân thành.`;
 
 // Lấy thông tin cấu hình từ biến môi trường
 function getLLMConfig() {
@@ -83,29 +184,51 @@ function getLLMConfig() {
   return { apiKey, baseUrl, model };
 }
 
-// Endpoint trả về thông tin hệ thống (không bao gồm API key)
+// Endpoint trả về thông tin hệ thống và cấu hình hạn mức
 app.get('/api/info', (req, res) => {
   const { baseUrl, model, apiKey } = getLLMConfig();
   res.json({
     configured: Boolean(apiKey),
     model,
-    provider: baseUrl.includes('cerebras') ? 'Cerebras' : (baseUrl.includes('groq') ? 'Groq' : 'OpenAI-compatible')
+    provider: baseUrl.includes('cerebras') ? 'Cerebras' : (baseUrl.includes('groq') ? 'Groq' : 'OpenAI-compatible'),
+    limits: {
+      maxReqPerMinute: LIMIT_REQ_PER_MINUTE,
+      maxReqPerHour: LIMIT_REQ_PER_HOUR,
+      maxTokensPerHour: LIMIT_TOKENS_PER_HOUR,
+      maxMessageChars: MAX_MESSAGE_CHARS
+    }
+  });
+});
+
+// Endpoint trả về hạn mức còn lại của người dùng hiện tại
+app.get('/api/quota', (req, res) => {
+  const key = getUserKey(req);
+  const record = getUserRecord(key);
+  const now = Date.now();
+  const minutesLeft = Math.max(1, Math.ceil((60 * 60 * 1000 - (now - record.hourStart)) / 60000));
+
+  res.json({
+    requestsRemaining: Math.max(0, LIMIT_REQ_PER_HOUR - record.hourReqs),
+    maxRequests: LIMIT_REQ_PER_HOUR,
+    tokensRemaining: Math.max(0, LIMIT_TOKENS_PER_HOUR - record.hourTokens),
+    maxTokens: LIMIT_TOKENS_PER_HOUR,
+    resetInMinutes: minutesLeft
   });
 });
 
 // Endpoint chat streaming: POST /api/chat
-app.post('/api/chat', rateLimitMiddleware, async (req, res) => {
+app.post('/api/chat', rateAndTokenLimitMiddleware, async (req, res) => {
   const { messages } = req.body;
 
   if (!messages || !Array.isArray(messages) || messages.length === 0) {
     return res.status(400).json({ error: 'Thiếu danh sách tin nhắn.' });
   }
 
-  // Kiểm tra độ dài tin nhắn (tối đa 2000 ký tự per message)
+  // Kiểm tra độ dài tin nhắn (tối đa theo cấu hình MAX_MESSAGE_CHARS)
   for (const m of messages) {
-    if (m && typeof m.content === 'string' && m.content.length > 2000) {
+    if (m && typeof m.content === 'string' && m.content.length > MAX_MESSAGE_CHARS) {
       return res.status(400).json({
-        error: 'Tin nhắn quá dài! Tối đa 2000 ký tự thôi, viết dài dòng quá tao không thèm đọc đâu!'
+        error: `Tin nhắn dài quá ${MAX_MESSAGE_CHARS} ký tự rồi con lợn ạ! Viết ngắn gọn thôi tao không rảnh đọc văn tế của mày!`
       });
     }
   }
@@ -119,7 +242,7 @@ app.post('/api/chat', rateLimitMiddleware, async (req, res) => {
     });
   }
 
-  // Tối ưu token tối đa: Chỉ lấy 4 tin gần nhất (2 lượt hỏi-đáp gần nhất) thay vì 12 tin
+  // Tối ưu token tối đa: Chỉ lấy 4 tin gần nhất (2 lượt hỏi-đáp gần nhất)
   const recentMessages = messages.slice(-4);
   const payloadMessages = [
     { role: 'system', content: SYSTEM_PROMPT },
@@ -170,6 +293,7 @@ app.post('/api/chat', rateLimitMiddleware, async (req, res) => {
     const reader = upstreamRes.body.getReader();
     const decoder = new TextDecoder('utf-8');
     let buffer = '';
+    let fullResponseText = '';
 
     while (true) {
       const { value, done } = await reader.read();
@@ -193,6 +317,7 @@ app.post('/api/chat', rateLimitMiddleware, async (req, res) => {
             const parsed = JSON.parse(trimmed.slice(6));
             const delta = parsed.choices?.[0]?.delta?.content;
             if (delta) {
+              fullResponseText += delta;
               res.write(`data: ${JSON.stringify({ token: delta })}\n\n`);
             }
           } catch (e) {
@@ -200,6 +325,15 @@ app.post('/api/chat', rateLimitMiddleware, async (req, res) => {
           }
         }
       }
+    }
+
+    // Tính toán số token tiêu thụ thực tế và ghi nhận vào hạn ngạch người dùng
+    if (req.userRecord) {
+      const promptChars = recentMessages.reduce((sum, m) => sum + (m.content ? m.content.length : 0), 0) + SYSTEM_PROMPT.length;
+      const promptTokens = Math.ceil(promptChars / 3.5);
+      const completionTokens = Math.ceil(fullResponseText.length / 3.5);
+      const totalTokens = promptTokens + completionTokens;
+      req.userRecord.hourTokens += totalTokens;
     }
 
     res.write('data: [DONE]\n\n');
@@ -242,7 +376,7 @@ function splitTextIntoTTSChunks(text, maxLength = 180) {
   return chunks;
 }
 
-// Endpoint phát giọng nói trực tiếp từ server (hoạt động trên MỌI máy tính/điện thoại không cần cài đặt gói ngôn ngữ)
+// Endpoint phát giọng nói trực tiếp từ server
 app.get('/api/tts', async (req, res) => {
   try {
     const rawText = (req.query.text || '').trim();
@@ -294,6 +428,7 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`=======================================================`);
   console.log(`🚀 Chatbot Adudu đang chạy tại: http://localhost:${PORT}`);
   console.log(`🛸 Người ngoài hành tinh đầu vuông cọc cằn đã sẵn sàng!`);
+  console.log(`⚡ Giới hạn: ${LIMIT_REQ_PER_MINUTE} req/phút, ${LIMIT_REQ_PER_HOUR} req/giờ, ${LIMIT_TOKENS_PER_HOUR} tokens/giờ per IP`);
   console.log(`=======================================================`);
 });
 
