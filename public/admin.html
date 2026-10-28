@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AduduBot Admin • VUA manhdan99</title>
+  <link rel="icon" type="image/png" href="assets/adudu.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Be+Vietnam+Pro:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0b0f19;
+      --card-bg: #111827;
+      --card-border: #1f2937;
+      --accent: #10b981;
+      --accent-glow: rgba(16, 185, 129, 0.2);
+      --primary: #3b82f6;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --text: #f3f4f6;
+      --text-muted: #9ca3af;
+      --bubble-user: #1e3a8a;
+      --bubble-bot: #064e3b;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Be Vietnam Pro', sans-serif;
+    }
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .hidden {
+      display: none !important;
+    }
+    .login-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .login-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 36px 28px;
+      width: 100%;
+      max-width: 440px;
+      text-align: center;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+    }
+    .login-avatar {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      margin: 0 auto 16px;
+      border: 3px solid var(--accent);
+      box-shadow: 0 0 20px var(--accent-glow);
+      display: block;
+    }
+    .login-title {
+      font-family: 'Bangers', cursive;
+      font-size: 28px;
+      letter-spacing: 1px;
+      color: #34d399;
+      margin-bottom: 6px;
+    }
+    .login-subtitle {
+      color: var(--text-muted);
+      font-size: 14px;
+      margin-bottom: 24px;
+    }
+    .login-badge {
+      display: inline-block;
+      background: rgba(245, 158, 11, 0.15);
+      color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 20px;
+    }
+    .form-group {
+      margin-bottom: 18px;
+      text-align: left;
+    }
+    .form-group label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+    .form-input {
+      width: 100%;
+      padding: 12px 14px;
+      background: #1f2937;
+      border: 1px solid #374151;
+      border-radius: 8px;
+      color: #fff;
+      font-size: 15px;
+      outline: none;
+      transition: all 0.2s;
+    }
+    .form-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-glow);
+    }
+    .btn-login {
+      width: 100%;
+      padding: 12px;
+      background: var(--accent);
+      color: #000;
+      font-weight: 700;
+      font-size: 15px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-login:hover {
+      background: #059669;
+      color: #fff;
+    }
+    .login-err {
+      color: var(--danger);
+      font-size: 13px;
+      margin-top: 12px;
+      min-height: 20px;
+    }
+    .admin-header {
+      background: #111827;
+      border-bottom: 1px solid #1f2937;
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .brand-section {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .brand-img {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      border: 2px solid var(--accent);
+    }
+    .brand-title {
+      font-family: 'Bangers', cursive;
+      font-size: 22px;
+      letter-spacing: 0.5px;
+      color: #34d399;
+    }
+    .brand-vua {
+      background: #fbbf24;
+      color: #000;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-left: 6px;
+    }
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .btn-header {
+      padding: 8px 14px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      border: 1px solid #374151;
+      background: #1f2937;
+      color: var(--text);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+    .btn-header:hover {
+      background: #374151;
+    }
+    .btn-danger {
+      border-color: rgba(239, 68, 68, 0.4);
+      background: rgba(239, 68, 68, 0.1);
+      color: #f87171;
+    }
+    .btn-danger:hover {
+      background: var(--danger);
+      color: #fff;
+    }
+    .admin-main {
+      padding: 20px 24px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      max-width: 1600px;
+      margin: 0 auto;
+      width: 100%;
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+    }
+    .stat-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 18px 20px;
+      position: relative;
+      overflow: hidden;
+    }
+    .stat-card::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+      background: var(--accent);
+    }
+    .stat-card.blue::after { background: var(--primary); }
+    .stat-card.yellow::after { background: var(--warning); }
+    .stat-card.red::after { background: var(--danger); }
+    .stat-label {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+    .stat-val {
+      font-size: 28px;
+      font-weight: 700;
+      color: #fff;
+    }
+    .stat-sub {
+      font-size: 12px;
+      color: #9ca3af;
+      margin-top: 4px;
+    }
+    .workspace {
+      display: grid;
+      grid-template-columns: 420px 1fr;
+      gap: 20px;
+      flex: 1;
+      min-height: 600px;
+    }
+    @media (max-width: 900px) {
+      .workspace {
+        grid-template-columns: 1fr;
+      }
+    }
+    .panel {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      height: calc(100vh - 280px);
+      min-height: 500px;
+    }
+    .panel-header {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--card-border);
+      background: #131c2e;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .panel-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #e5e7eb;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .search-input {
+      padding: 8px 12px;
+      border-radius: 6px;
+      background: #1f2937;
+      border: 1px solid #374151;
+      color: #fff;
+      font-size: 13px;
+      outline: none;
+      width: 180px;
+    }
+    .search-input:focus {
+      border-color: var(--accent);
+    }
+    .user-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .user-item {
+      padding: 12px 14px;
+      border-radius: 8px;
+      background: #182234;
+      border: 1px solid #283548;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .user-item:hover {
+      background: #1f2d45;
+      border-color: #3b82f6;
+    }
+    .user-item.active {
+      background: #1e3a5f;
+      border-color: #60a5fa;
+      box-shadow: 0 0 12px rgba(96, 165, 250, 0.2);
+    }
+    .user-item.blocked {
+      border-color: rgba(239, 68, 68, 0.4);
+      background: rgba(239, 68, 68, 0.08);
+    }
+    .user-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
+    }
+    .user-ip {
+      font-size: 14px;
+      font-weight: 700;
+      color: #93c5fd;
+      font-family: monospace;
+    }
+    .badge-blocked {
+      background: #ef4444;
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+    .user-device {
+      font-size: 12px;
+      color: #cbd5e1;
+      margin-bottom: 8px;
+    }
+    .user-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+    .token-pill {
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-weight: 600;
+    }
+    .chat-view {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .chat-target-header {
+      padding: 12px 18px;
+      background: #162032;
+      border-bottom: 1px solid var(--card-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .chat-target-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .chat-target-ip {
+      font-size: 15px;
+      font-weight: 700;
+      color: #60a5fa;
+      font-family: monospace;
+    }
+    .chat-target-details {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    .messages-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      background: #0d131f;
+    }
+    .msg-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      background: #131c2e;
+      border: 1px solid #233149;
+      border-radius: 10px;
+      padding: 14px 16px;
+    }
+    .msg-row {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .msg-sender {
+      font-size: 12px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .sender-user { color: #60a5fa; }
+    .sender-adudu { color: #34d399; }
+    .msg-time {
+      font-size: 11px;
+      color: #64748b;
+      font-weight: normal;
+    }
+    .msg-bubble {
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 14px;
+      line-height: 1.5;
+      word-break: break-word;
+      white-space: pre-wrap;
+    }
+    .bubble-user {
+      background: #1e293b;
+      color: #f1f5f9;
+      border-left: 3px solid #3b82f6;
+    }
+    .bubble-adudu {
+      background: #064e3b;
+      color: #ecfdf5;
+      border-left: 3px solid #10b981;
+    }
+    .token-breakdown {
+      margin-top: 4px;
+      font-size: 11px;
+      color: #94a3b8;
+      display: flex;
+      gap: 12px;
+      font-family: monospace;
+    }
+    .empty-state {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #64748b;
+      gap: 12px;
+      padding: 40px;
+      text-align: center;
+    }
+    .empty-icon {
+      font-size: 48px;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="loginScreen" class="login-container">
+    <div class="login-card">
+      <img src="assets/adudu.png" alt="Adudu" class="login-avatar" onerror="this.src='assets/adudu-default.svg'">
+      <div class="login-badge">👑 DÀNH RIÊNG CHO VUA MANHDAN99</div>
+      <h1 class="login-title">ADUDUBOT ADMIN</h1>
+      <p class="login-subtitle">Hệ thống theo dõi lịch sử chat & thống kê token từng người</p>
+      
+      <div class="form-group">
+        <label for="adminPass">Mật khẩu quản trị</label>
+        <input type="password" id="adminPass" class="form-input" placeholder="Nhập mật khẩu..." autofocus>
+      </div>
+
+      <button id="btnLogin" class="btn-login">ĐĂNG NHẬP HỆ THỐNG</button>
+      <div id="loginErr" class="login-err"></div>
+    </div>
+  </div>
+
+  <div id="adminDashboard" class="hidden">
+    <header class="admin-header">
+      <div class="brand-section">
+        <img src="assets/adudu.png" alt="Adudu" class="brand-img" onerror="this.src='assets/adudu-default.svg'">
+        <div>
+          <span class="brand-title">ADUDU ADMIN</span>
+          <span class="brand-vua">VUA MANHDAN99</span>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button id="btnRefresh" class="btn-header" title="Cập nhật dữ liệu mới">
+          <span>🔄</span> Làm mới
+        </button>
+        <button id="btnExport" class="btn-header" title="Tải toàn bộ file lịch sử JSON">
+          <span>📥</span> Xuất JSON
+        </button>
+        <button id="btnClear" class="btn-header btn-danger" title="Xóa toàn bộ lịch sử">
+          <span>🗑️</span> Xóa sạch
+        </button>
+        <button id="btnLogout" class="btn-header" title="Đăng xuất">
+          <span>🚪</span> Thoát
+        </button>
+      </div>
+    </header>
+
+    <main class="admin-main">
+      <div class="stats-grid">
+        <div class="stat-card blue">
+          <div class="stat-label">Tổng người dùng (IP)</div>
+          <div class="stat-val" id="statUsers">0</div>
+          <div class="stat-sub">Đã truy cập chatbot</div>
+        </div>
+        <div class="stat-card yellow">
+          <div class="stat-label">Tổng câu hỏi đã xử lý</div>
+          <div class="stat-val" id="statMessages">0</div>
+          <div class="stat-sub">Tin nhắn gửi lên</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Tổng token đã đốt</div>
+          <div class="stat-val" id="statTokens">0</div>
+          <div class="stat-sub">Tokens tiêu hao</div>
+        </div>
+        <div class="stat-card red">
+          <div class="stat-label">Thiết bị đang bị chặn</div>
+          <div class="stat-val" id="statBlocked">0</div>
+          <div class="stat-sub">Trong danh sách đen</div>
+        </div>
+      </div>
+
+      <div class="workspace">
+        <div class="panel">
+          <div class="panel-header">
+            <span class="panel-title">👥 Danh sách người dùng</span>
+            <input type="text" id="userSearch" class="search-input" placeholder="Lọc IP / máy...">
+          </div>
+          <div class="user-list" id="userListContainer">
+            <div class="empty-state">
+              <div class="empty-icon">⏳</div>
+              <p>Đang tải danh sách người dùng...</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div id="chatTargetHeader" class="chat-target-header hidden">
+            <div class="chat-target-info">
+              <div class="chat-target-ip" id="selectedUserIp">127.0.0.1</div>
+              <div class="chat-target-details" id="selectedUserDetails">Thiết bị • Lần cuối</div>
+            </div>
+            <div>
+              <button id="btnToggleBlock" class="btn-header btn-danger">🚫 Chặn IP này</button>
+            </div>
+          </div>
+
+          <div class="chat-view">
+            <div class="messages-scroll" id="messagesContainer">
+              <div class="empty-state" id="emptyChatPlaceholder">
+                <div class="empty-icon">👈</div>
+                <p>Hãy chọn một người dùng ở danh sách bên trái để xem toàn bộ tin nhắn họ đã hỏi và câu trả lời của Adudu!</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const AUTH_KEY = 'adudu_admin_token';
+    let currentAdminKey = sessionStorage.getItem(AUTH_KEY) || '';
+    let allUsers = [];
+    let selectedUserKey = null;
+
+    const el = {
+      loginScreen: document.getElementById('loginScreen'),
+      adminDashboard: document.getElementById('adminDashboard'),
+      adminPass: document.getElementById('adminPass'),
+      btnLogin: document.getElementById('btnLogin'),
+      loginErr: document.getElementById('loginErr'),
+      btnLogout: document.getElementById('btnLogout'),
+      btnRefresh: document.getElementById('btnRefresh'),
+      btnExport: document.getElementById('btnExport'),
+      btnClear: document.getElementById('btnClear'),
+      statUsers: document.getElementById('statUsers'),
+      statMessages: document.getElementById('statMessages'),
+      statTokens: document.getElementById('statTokens'),
+      statBlocked: document.getElementById('statBlocked'),
+      userSearch: document.getElementById('userSearch'),
+      userListContainer: document.getElementById('userListContainer'),
+      chatTargetHeader: document.getElementById('chatTargetHeader'),
+      selectedUserIp: document.getElementById('selectedUserIp'),
+      selectedUserDetails: document.getElementById('selectedUserDetails'),
+      btnToggleBlock: document.getElementById('btnToggleBlock'),
+      messagesContainer: document.getElementById('messagesContainer'),
+      emptyChatPlaceholder: document.getElementById('emptyChatPlaceholder')
+    };
+
+    function init() {
+      if (currentAdminKey) {
+        showDashboard();
+      } else {
+        showLogin();
+      }
+    }
+
+    function showLogin() {
+      el.loginScreen.classList.remove('hidden');
+      el.adminDashboard.classList.add('hidden');
+      el.adminPass.value = '';
+      el.loginErr.textContent = '';
+      el.adminPass.focus();
+    }
+
+    function showDashboard() {
+      el.loginScreen.classList.add('hidden');
+      el.adminDashboard.classList.remove('hidden');
+      loadAllData();
+    }
+
+    el.btnLogin.addEventListener('click', handleLogin);
+    el.adminPass.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') handleLogin();
+    });
+
+    async function handleLogin() {
+      const pass = el.adminPass.value.trim();
+      if (!pass) {
+        el.loginErr.textContent = 'Vui lòng nhập mật khẩu quản trị!';
+        return;
+      }
+      el.btnLogin.textContent = 'Đang kiểm tra...';
+      el.loginErr.textContent = '';
+
+      try {
+        const res = await fetch('/api/admin/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: pass })
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          currentAdminKey = data.token;
+          sessionStorage.setItem(AUTH_KEY, currentAdminKey);
+          showDashboard();
+        } else {
+          el.loginErr.textContent = data.error || 'Sai mật khẩu!';
+        }
+      } catch (err) {
+        el.loginErr.textContent = 'Không kết nối được đến máy chủ!';
+      } finally {
+        el.btnLogin.textContent = 'ĐĂNG NHẬP HỆ THỐNG';
+      }
+    }
+
+    el.btnLogout.addEventListener('click', () => {
+      sessionStorage.removeItem(AUTH_KEY);
+      currentAdminKey = '';
+      showLogin();
+    });
+
+    el.btnRefresh.addEventListener('click', () => {
+      loadAllData();
+    });
+
+    el.btnExport.addEventListener('click', () => {
+      window.open(`/api/admin/export?x-admin-key=${encodeURIComponent(currentAdminKey)}`, '_blank');
+    });
+
+    el.btnClear.addEventListener('click', async () => {
+      if (!confirm('Bạn có chắc chắn muốn XÓA TOÀN BỘ lịch sử chat trên hệ thống không?')) return;
+      try {
+        const res = await fetch('/api/admin/logs', {
+          method: 'DELETE',
+          headers: { 'x-admin-key': currentAdminKey }
+        });
+        if (res.ok) {
+          selectedUserKey = null;
+          loadAllData();
+        }
+      } catch (e) {}
+    });
+
+    el.userSearch.addEventListener('input', renderUserList);
+
+    async function loadAllData() {
+      try {
+        const [statsRes, usersRes] = await Promise.all([
+          fetch('/api/admin/stats', { headers: { 'x-admin-key': currentAdminKey } }),
+          fetch('/api/admin/users', { headers: { 'x-admin-key': currentAdminKey } })
+        ]);
+
+        if (statsRes.status === 401 || usersRes.status === 401) {
+          el.btnLogout.click();
+          return;
+        }
+
+        const stats = await statsRes.json();
+        el.statUsers.textContent = Number(stats.totalUsers || 0).toLocaleString();
+        el.statMessages.textContent = Number(stats.totalMessages || 0).toLocaleString();
+        el.statTokens.textContent = Number(stats.totalTokens || 0).toLocaleString();
+        el.statBlocked.textContent = Number(stats.blockedCount || 0).toLocaleString();
+
+        allUsers = await usersRes.json();
+        renderUserList();
+
+        if (selectedUserKey) {
+          loadUserLogs(selectedUserKey);
+        }
+      } catch (err) {
+        console.error('Lỗi tải dữ liệu:', err);
+      }
+    }
+
+    function renderUserList() {
+      const query = el.userSearch.value.trim().toLowerCase();
+      const filtered = allUsers.filter(u => {
+        if (!query) return true;
+        return (u.ip && u.ip.toLowerCase().includes(query)) ||
+               (u.device && u.device.toLowerCase().includes(query)) ||
+               (u.clientId && u.clientId.toLowerCase().includes(query));
+      });
+
+      if (filtered.length === 0) {
+        el.userListContainer.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">🔍</div>
+            <p>${allUsers.length === 0 ? 'Chưa có ai nhắn tin nào cả!' : 'Không tìm thấy người dùng phù hợp'}</p>
+          </div>
+        `;
+        return;
+      }
+
+      el.userListContainer.innerHTML = filtered.map(u => {
+        const isSelected = u.userKey === selectedUserKey;
+        const timeStr = formatTimeAgo(u.lastSeen);
+        return `
+          <div class="user-item ${isSelected ? 'active' : ''} ${u.isBlocked ? 'blocked' : ''}" onclick="selectUser('${u.userKey}')">
+            <div class="user-top">
+              <span class="user-ip">${escapeHtml(u.ip)}</span>
+              ${u.isBlocked ? '<span class="badge-blocked">ĐÃ CHẶN</span>' : ''}
+            </div>
+            <div class="user-device">💻 ${escapeHtml(u.device || 'Thiết bị lạ')}</div>
+            <div class="user-meta">
+              <span>💬 ${u.messageCount} câu hỏi</span>
+              <span class="token-pill">⚡ ${Number(u.totalTokens || 0).toLocaleString()} tokens</span>
+              <span>${timeStr}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    window.selectUser = function(userKey) {
+      selectedUserKey = userKey;
+      renderUserList();
+      loadUserLogs(userKey);
+    };
+
+    async function loadUserLogs(userKey) {
+      const user = allUsers.find(u => u.userKey === userKey);
+      if (!user) return;
+
+      el.chatTargetHeader.classList.remove('hidden');
+      el.selectedUserIp.textContent = user.ip;
+      el.selectedUserDetails.textContent = `${user.device} • Tổng token: ${Number(user.totalTokens).toLocaleString()} • Client ID: ${user.clientId}`;
+
+      if (user.isBlocked) {
+        el.btnToggleBlock.textContent = '✅ Bỏ chặn IP này';
+        el.btnToggleBlock.classList.remove('btn-danger');
+      } else {
+        el.btnToggleBlock.textContent = '🚫 Chặn IP này';
+        el.btnToggleBlock.classList.add('btn-danger');
+      }
+
+      el.btnToggleBlock.onclick = async () => {
+        const action = user.isBlocked ? 'unblock' : 'block';
+        const target = user.ip;
+        try {
+          const res = await fetch('/api/admin/block', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-admin-key': currentAdminKey
+            },
+            body: JSON.stringify({ target, action })
+          });
+          if (res.ok) {
+            user.isBlocked = action === 'block';
+            loadAllData();
+          }
+        } catch (e) {}
+      };
+
+      try {
+        const res = await fetch(`/api/admin/logs?userKey=${encodeURIComponent(userKey)}`, {
+          headers: { 'x-admin-key': currentAdminKey }
+        });
+        const logs = await res.json();
+        renderMessages(logs);
+      } catch (e) {
+        console.error('Lỗi tải tin nhắn:', e);
+      }
+    }
+
+    function renderMessages(logs) {
+      if (!logs || logs.length === 0) {
+        el.messagesContainer.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">📭</div>
+            <p>Không có tin nhắn nào từ người này!</p>
+          </div>
+        `;
+        return;
+      }
+
+      const sorted = [...logs].reverse();
+      el.messagesContainer.innerHTML = sorted.map(log => {
+        const dateStr = new Date(log.timestamp).toLocaleString('vi-VN');
+        const pTok = log.tokens?.promptTokens || 0;
+        const cTok = log.tokens?.completionTokens || 0;
+        const totTok = log.tokens?.totalTokens || (pTok + cTok);
+
+        return `
+          <div class="msg-group">
+            <div class="msg-row">
+              <div class="msg-sender sender-user">
+                <span>👤 Người dùng</span>
+                <span class="msg-time">${dateStr}</span>
+              </div>
+              <div class="msg-bubble bubble-user">${escapeHtml(log.userMessage || '')}</div>
+            </div>
+
+            <div class="msg-row">
+              <div class="msg-sender sender-adudu">
+                <span>👽 Adudu phản hồi</span>
+              </div>
+              <div class="msg-bubble bubble-adudu">${escapeHtml(log.botResponse || '')}</div>
+              <div class="token-breakdown">
+                <span>Đầu vào: ${pTok} tok</span>
+                <span>•</span>
+                <span>Đầu ra: ${cTok} tok</span>
+                <span>•</span>
+                <span style="color: #34d399; font-weight: bold;">Tổng tiêu tốn: ${totTok} tokens</span>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      el.messagesContainer.scrollTop = el.messagesContainer.scrollHeight;
+    }
+
+    function formatTimeAgo(ts) {
+      if (!ts) return '';
+      const diffSec = Math.floor((Date.now() - ts) / 1000);
+      if (diffSec < 60) return 'Vừa xong';
+      const diffMin = Math.floor(diffSec / 60);
+      if (diffMin < 60) return `${diffMin}m trước`;
+      const diffHour = Math.floor(diffMin / 60);
+      if (diffHour < 24) return `${diffHour}h trước`;
+      return new Date(ts).toLocaleDateString('vi-VN');
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    setInterval(() => {
+      if (currentAdminKey && !document.hidden) {
+        loadAllData();
+      }
+    }, 8000);
+
+    init();
+  </script>
+</body>
+</html>

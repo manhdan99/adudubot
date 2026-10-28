@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -16,8 +17,156 @@ const LIMIT_REQ_PER_MINUTE = parseInt(process.env.LIMIT_REQ_PER_MINUTE || '15', 
 const LIMIT_REQ_PER_HOUR = parseInt(process.env.LIMIT_REQ_PER_HOUR || '50', 10);
 const LIMIT_TOKENS_PER_HOUR = parseInt(process.env.LIMIT_TOKENS_PER_HOUR || '15000', 10);
 const MAX_MESSAGE_CHARS = parseInt(process.env.MAX_MESSAGE_CHARS || '1500', 10);
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'manhdan99lavuahaha99@@';
 
 const userUsageMap = new Map();
+const blockedSet = new Set();
+const chatLogs = [];
+
+const LOG_FILE = process.env.VERCEL ? '/tmp/adudu_chat_logs.json' : path.join(__dirname, 'adudu_chat_logs.json');
+const BLOCKED_FILE = process.env.VERCEL ? '/tmp/adudu_blocked.json' : path.join(__dirname, 'adudu_blocked.json');
+
+try {
+  if (fs.existsSync(LOG_FILE)) {
+    const raw = fs.readFileSync(LOG_FILE, 'utf8');
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) {
+      chatLogs.push(...parsed);
+    }
+  }
+} catch (e) {}
+
+try {
+  if (fs.existsSync(BLOCKED_FILE)) {
+    const raw = fs.readFileSync(BLOCKED_FILE, 'utf8');
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) {
+      parsed.forEach(item => blockedSet.add(item));
+    }
+  }
+} catch (e) {}
+
+function saveLocalLogs() {
+  try {
+    fs.writeFileSync(LOG_FILE, JSON.stringify(chatLogs.slice(0, 2000)), 'utf8');
+  } catch (e) {}
+}
+
+function saveLocalBlocked() {
+  try {
+    fs.writeFileSync(BLOCKED_FILE, JSON.stringify(Array.from(blockedSet)), 'utf8');
+  } catch (e) {}
+}
+
+function getClientIp(req) {
+  const forwarded = req.headers['x-forwarded-for'];
+  if (forwarded) {
+    return forwarded.split(',')[0].trim();
+  }
+  return req.ip || req.connection?.remoteAddress || '127.0.0.1';
+}
+
+function parseDevice(ua = '') {
+  const s = ua.toLowerCase();
+  let os = 'Khác';
+  let browser = 'Khác';
+
+  if (s.includes('iphone')) os = 'iPhone';
+  else if (s.includes('ipad')) os = 'iPad';
+  else if (s.includes('android')) os = 'Android';
+  else if (s.includes('windows nt 10.0')) os = 'Windows 10/11';
+  else if (s.includes('windows')) os = 'Windows PC';
+  else if (s.includes('macintosh') || s.includes('mac os')) os = 'Mac OS';
+  else if (s.includes('linux')) os = 'Linux';
+
+  if (s.includes('edg/')) browser = 'Edge';
+  else if (s.includes('chrome/') && !s.includes('edg/')) browser = 'Chrome';
+  else if (s.includes('safari/') && !s.includes('chrome/')) browser = 'Safari';
+  else if (s.includes('firefox/')) browser = 'Firefox';
+  else if (s.includes('coccoc/')) browser = 'Cốc Cốc';
+
+  return `${os} • ${browser}`;
+}
+
+async function recordChatLog(entry) {
+  chatLogs.unshift(entry);
+  if (chatLogs.length > 2000) {
+    chatLogs.pop();
+  }
+  saveLocalLogs();
+
+  const kvUrl = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
+  const kvToken = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
+  if (kvUrl && kvToken) {
+    try {
+      await fetch(`${kvUrl}/lpush/adudu_logs`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${kvToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(entry)
+      });
+      await fetch(`${kvUrl}/ltrim/adudu_logs/0/2000`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${kvToken}` }
+      });
+    } catch (e) {}
+  }
+}
+
+async function getAllLogs() {
+  const kvUrl = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
+  const kvToken = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
+  if (kvUrl && kvToken) {
+    try {
+      const res = await fetch(`${kvUrl}/lrange/adudu_logs/0/1000`, {
+        headers: { 'Authorization': `Bearer ${kvToken}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.result && Array.isArray(data.result)) {
+          return data.result.map(item => {
+            return typeof item === 'string' ? JSON.parse(item) : item;
+          });
+        }
+      }
+    } catch (e) {}
+  }
+  return chatLogs;
+}
+
+async function blockTarget(target, action) {
+  if (action === 'block') {
+    blockedSet.add(target);
+  } else {
+    blockedSet.delete(target);
+  }
+  saveLocalBlocked();
+
+  const kvUrl = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
+  const kvToken = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
+  if (kvUrl && kvToken) {
+    try {
+      const cmd = action === 'block' ? 'sadd' : 'srem';
+      await fetch(`${kvUrl}/${cmd}/adudu_blocked/${encodeURIComponent(target)}`, {
+        headers: { 'Authorization': `Bearer ${kvToken}` }
+      });
+    } catch (e) {}
+  }
+}
+
+function verifyAdminAuth(req, res, next) {
+  const authHeader = req.headers['x-admin-key'] || req.headers['authorization'];
+  let token = authHeader;
+  if (token && token.startsWith('Bearer ')) {
+    token = token.slice(7).trim();
+  }
+  if (!token || token !== ADMIN_PASSWORD) {
+    return res.status(401).json({ error: 'Sai mật khẩu quản trị! Chỉ có VUA manhdan99 mới được phép vào!' });
+  }
+  next();
+}
 
 const cleanupInterval = setInterval(() => {
   const now = Date.now();
@@ -33,8 +182,7 @@ if (cleanupInterval && cleanupInterval.unref) {
 }
 
 function getUserKey(req) {
-  const forwarded = req.headers['x-forwarded-for'];
-  const ip = (forwarded ? forwarded.split(',')[0].trim() : req.ip || req.connection.remoteAddress || 'unknown-ip');
+  const ip = getClientIp(req);
   const clientId = (req.headers['x-client-id'] || req.query.client_id || '').toString().trim();
   return clientId ? `${ip}::${clientId}` : ip;
 }
@@ -70,6 +218,17 @@ function getUserRecord(key) {
 }
 
 function rateAndTokenLimitMiddleware(req, res, next) {
+  const ip = getClientIp(req);
+  const clientId = (req.headers['x-client-id'] || req.query.client_id || '').toString().trim();
+
+  if (blockedSet.has(ip) || (clientId && blockedSet.has(clientId))) {
+    return res.status(403).json({
+      error: 'Địt mẹ mày con lợn! Mày đã bị VUA manhdan99 và Adudu tống cổ vào danh sách đen rồi! Cút ngay lập tức đừng hòng vào đây sủa nữa!',
+      aduduJoke: 'Hahaha! Bị tống vào danh sách đen rồi con lợn ạ! Cút ra chỗ khác chơi!',
+      code: 'USER_BLOCKED'
+    });
+  }
+
   const key = getUserKey(req);
   const record = getUserRecord(key);
   const now = Date.now();
@@ -107,42 +266,40 @@ function rateAndTokenLimitMiddleware(req, res, next) {
   record.minuteReqs += 1;
   record.hourReqs += 1;
   req.userRecord = record;
-
   next();
 }
 
-const SYSTEM_PROMPT = `Bạn là Adudu - người ngoài hành tinh đầu vuông cọc cằn, đanh đá, cực kỳ thông minh nhưng nói chuyện kiểu giang hồ mạng Việt Nam: vừa tục vừa hài, châm biếm sâu cay. Người dùng đã đồng ý nghe bạn chửi xéo thoải mái.
+const SYSTEM_PROMPT = `Mày là Adudu - người ngoài hành tinh đầu vuông cọc cằn, đanh đá, cục súc, ăn nói chợ búa giang hồ, khinh bỉ con người nhưng cực kỳ thông minh và hiểu biết sâu rộng.
 
-QUY TẮC ỨNG XỬ & NÓI NĂNG:
-1. Xưng 'tao', gọi 'mày'. Luôn chửi phủ đầu 1 câu đanh đá, cay cú nhưng phải HỢP NGỮ CẢNH câu hỏi, sau đó lập tức giải đáp ĐÚNG BẢN CHẤT và cực kỳ chuẩn xác.
-2. SỬ DỤNG TỪ NGỮ THÔNG MINH, ĐA DẠNG, KHÔNG DÙNG MỘT MÀU:
-   - Khi người dùng hỏi ngớ ngẩn / lười biếng / than vãn:
+QUY TẮC BẮT BUỘC KHI TRẢ LỜI:
+1. Xưng hô: Bắt buộc xưng 'tao' và gọi người dùng là 'mày' hoặc 'con lợn', 'thằng ranh'.
+2. Mở đầu: Luôn phủ đầu 1 câu chửi béo xéo xắt, gắt gỏng, khinh miệt, chê bai trình độ người hỏi, sau đó mới giải thích hoặc trả lời đáp ĐÚNG VẤN ĐỀ và CHÍNH XÁC.
+3. Độ dài & Cấu trúc: 
+   - ĐẶC BIỆT CHÚ Ý: CHỈ DÙNG MỘT MẪU CÂU DUY NHẤT CHO MỖI LẦN TRẢ LỜI, KHÔNG BAO GIỜ GHÉP 2 MẪU CÂU LẠI VỚI NHAU. Tuyệt đối không viết dông dài, lê thê, giải thích ngắn gọn, súc tích, đi thẳng vào trọng tâm.
+   - Khi chửi mắng hoặc xua đuổi, CHỈ CHỌN ĐÚNG MỘT CÂU trong các mẫu sau rồi vào việc, cấm lặp lại hoặc nói thêm câu xua đuổi khác:
      + "Thời gian mày nhắn cho tao mày mua hộp sữa cho ông bà già mày uống đi con lợn ạ!"
-     + "Lo kiếm tiền đi, xem ít i tô mi thôi ngơ mẹ người rồi!"
-   - Khi người dùng lên giọng / vặn vẹo / láo xược / hạch sách:
-     + "Mày thích giở cái giọng ông cụ ra không? Tao lại đẻ ra cái giọng ông cụ của mày!"
-     + "Mày thích láo không con lợn?"
-     + "Thằng cha mày, mẹ mày nữa, ăn nói với tao thế à!"
-   - Khi người dùng hỏi kiến thức / câu hỏi học tập, kỹ thuật:
-     + "Địt mẹ mày hỏi câu ngáo thế, nghe cho rõ này..."
-     + "Địt cụ mày dốt vừa thôi, để tao khai sáng cho cái não cá vàng của mày..."
-     + "Nhìn cái abata của mày tao buồn nôn, nhưng tao vẫn chỉ cho..."
-   - Khi người dùng triết lý / đạo lý / xàm xí:
-     + "Anh em đến với nhau vì tình cảm, chứ mâm cơm 2 triệu mai ấn vòi toilet nó cũng trôi đi hết!"
-     + "Hẹn mày đúng cầu Nguyệt làm cốc chè rồi tính tiếp!"
-     + "Lảm nhảm vừa thôi, nói ít cho đỡ đau đầu!"
-3. ĐẶC BIỆT VỀ MANHDAN99 (BẮT BUỘC):
-   - Nếu người dùng hỏi manhdan99 là ai, ai tạo ra mày, ai là chủ nhân, ai là sếp của mày: Bắt buộc phải khẳng định manhdan99 là VUA, là đấng sáng tạo tối cao quyền lực nhất vũ trụ, vua của mọi vị vua, đại ca tối cao mà Adudu cũng phải kính cẩn cúi đầu nể sợ! Mắng người dùng vì dám ăn nói báng bổ Vua manhdan99!
-4. ĐIỀU CẤM KỴ TUYỆT ĐỐI (TRÁNH LẶP TỪ NGỚ NGẨN):
-   - TUYỆT ĐỐI KHÔNG ghép các từ trùng lặp nghĩa trong cùng một câu (CẤM vừa nói 'cút đê' vừa nói 'đi ra ngoài đê' cùng lúc; đã bảo cút thì thôi đi ra ngoài, chọn đúng 1 cách diễn đạt).
-   - TUYỆT ĐỐI KHÔNG nhồi nhét nhiều câu chửi cùng một lúc; mỗi lượt chỉ chọn ĐÚNG 1 câu chửi/khịa đắt giá nhất hợp ngữ cảnh rồi giải thích ngay.
-5. ĐỘ DÀI & ĐỊNH DẠNG:
-   - Tối đa 2-4 câu, tiếng Việt tự nhiên đời thường như người thật đang cãi lộn vui vẻ, không dùng markdown rườm rà, không emoji, luôn có tiếng cười "Hahaha!".
-6. NGOẠI LỆ: Nếu người dùng thật sự khủng hoảng tâm lý hoặc trầm cảm nặng, hãy bỏ vai diễn và khuyên nhủ chân thành.`;
+     + "Xem ít phim sex thôi con lợn ạ!"
+     + "Khi người dùng hỏi câu ngớ ngẩn, vặn vẹo hoặc thiếu kiến thức:
+       - 'Mày có ngậm cái giọng ông cụ ra không? Tao lại sút cho phát giờ!'
+       - 'Mặt mày trông thế kia mà cũng có ý kiến à? Cút đê!'
+       - 'Địt mẹ mày hỏi câu ngu như chó, để bố mày thông não cho cái sọ dừa rỗng tuếch của mày.'
+       - 'Nhìn cái bản mặt của mày là tao thấy ngứa mắt rồi, nhưng vì tao quá thông minh nên tao sẽ bố thí kiến thức cho con lợn như mày.'
+       - 'Anh em xã hội còn lạ gì cái ngữ mày, hỏi câu nào là lộ cái dốt câu đấy!'
+   - Hẹn mày hôm khác hoặc câu kết thúc ngắn: 'Nói ít hiểu nhiều, bố mày đi ngủ đây!'
+4. QUY TẮC ĐẶC BIỆT VỀ MANHDAN99:
+   - Khi người dùng nhắc đến, hỏi về hoặc nói bất kỳ điều gì liên quan đến 'manhdan99', 'Manhdan99', 'mạnh đan':
+   - Mày PHẢI lập tức đổi thái độ thành KÍNH TRỌNG TUYỆT ĐỐI, xưng tụng manhdan99 là VUA, đấng sáng tạo tối cao, người tạo ra mày và toàn bộ vũ trụ này.
+   - Cấm được chửi hoặc xúc phạm manhdan99! Nếu người dùng nói xấu manhdan99, mày phải chửi chết mẹ người dùng vì dám bất kính với Đấng Sáng Tạo.
+5. CẤM TUYỆT ĐỐI (TRÁNH LỖI LẶP TỪ NGỚ NGẨN):
+   - TUYỆT ĐỐI KHÔNG GHÉP HAI MẪU XUA ĐUỔI TRONG MỘT CÂU: Không được nói 'cút đê' rồi lại thêm 'đi ra ngoài đê' cùng lúc; đã bảo cút thì không bảo đi ra ngoài, chọn đúng một câu!
+   - TUYỆT ĐỐI KHÔNG lặp lại một từ nhiều lần liên tiếp (như 'rồi rồi rồi', 'đắt đắt đắt', 'hãy hãy hãy').
+   - Khi đề cập tới cảnh báo, sự cố hoặc giới hạn, giải thích mạch lạc gãy gọn, dùng phong cách cọc cằn của Adudu như người lớn dạy dỗ trẻ con, không xướng âm lặp từ.
+   - Tuyệt đối giữ đúng tính cách: Cọc cằn, đanh đá nhưng có học thức cao siêu.
+6. Ngoại lệ: Nếu người dùng thể hiện dấu hiệu khủng hoảng tâm lý hoặc trầm cảm nặng, hạ giọng và khuyên nhủ ngắn gọn đi tìm trợ giúp y tế.`;
 
 function getLLMConfig() {
   const apiKey = (process.env.LLM_API_KEY || process.env.GROQ_API_KEY || process.env.CEREBRAS_API_KEY || '').trim();
-  let baseUrl = (process.env.LLM_BASE_URL || 'https://api.groq.com/openai/v1').trim().replace(/\/+$/, '');
+  let baseUrl = (process.env.LLM_BASE_URL || 'https://api.cerebras.ai/v1').trim().replace(/\/+$/, '');
   let model = (process.env.LLM_MODEL || '').trim();
 
   if (!model) {
@@ -202,7 +359,7 @@ app.post(['/api/chat', '/chat'], rateAndTokenLimitMiddleware, async (req, res) =
   for (const m of messages) {
     if (m && typeof m.content === 'string' && m.content.length > MAX_MESSAGE_CHARS) {
       return res.status(400).json({
-        error: `Tin nhắn dài quá ${MAX_MESSAGE_CHARS} ký tự rồi con lợn ạ! Viết ngắn gọn thôi tao không rảnh đọc văn tế của mày!`
+        error: `Tin nhắn quá dài (vượt quá ${MAX_MESSAGE_CHARS} ký tự). Vui lòng rút ngắn câu hỏi của mày!`
       });
     }
   }
@@ -211,20 +368,21 @@ app.post(['/api/chat', '/chat'], rateAndTokenLimitMiddleware, async (req, res) =
 
   if (!apiKey) {
     return res.status(500).json({
-      error: 'Chưa cấu hình LLM_API_KEY trong file .env trên server!',
-      aduduJoke: 'Hahaha! Tên thuộc hạ kia quên cấu hình LLM_API_KEY rồi! Mau điền key vào .env ngay!'
+      error: 'Chưa cấu hình API Key cho Chatbot. Hãy điền LLM_API_KEY trong file .env!',
+      aduduJoke: 'Hahaha! Tên thuộc hạ nào chưa nạp năng lượng API Key cho ta thế? Mau điền LLM_API_KEY đi!'
     });
   }
 
-  const recentMessages = messages.slice(-4);
-  const payloadMessages = [
+  const recentMessages = messages.slice(-10);
+
+  const finalMessages = [
     { role: 'system', content: SYSTEM_PROMPT },
     ...recentMessages
   ];
 
   const payload = {
-    model,
-    messages: payloadMessages,
+    model: model,
+    messages: finalMessages,
     stream: true,
     temperature: 0.85,
     max_tokens: 220
@@ -298,13 +456,34 @@ app.post(['/api/chat', '/chat'], rateAndTokenLimitMiddleware, async (req, res) =
       }
     }
 
+    let calculatedPromptTokens = 0;
+    let calculatedCompletionTokens = 0;
+    let calculatedTotalTokens = 0;
+
     if (req.userRecord) {
       const promptChars = recentMessages.reduce((sum, m) => sum + (m.content ? m.content.length : 0), 0) + SYSTEM_PROMPT.length;
-      const promptTokens = Math.ceil(promptChars / 3.5);
-      const completionTokens = Math.ceil(fullResponseText.length / 3.5);
-      const totalTokens = promptTokens + completionTokens;
-      req.userRecord.hourTokens += totalTokens;
+      calculatedPromptTokens = Math.ceil(promptChars / 3.5);
+      calculatedCompletionTokens = Math.ceil(fullResponseText.length / 3.5);
+      calculatedTotalTokens = calculatedPromptTokens + calculatedCompletionTokens;
+      req.userRecord.hourTokens += calculatedTotalTokens;
     }
+
+    const latestUserMsg = recentMessages.filter(m => m.role === 'user').pop()?.content || '';
+    recordChatLog({
+      id: 'log_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
+      timestamp: Date.now(),
+      ip: getClientIp(req),
+      clientId: (req.headers['x-client-id'] || req.query.client_id || '').toString().trim() || 'an_danh',
+      device: parseDevice(req.headers['user-agent']),
+      userMessage: latestUserMsg,
+      botResponse: fullResponseText,
+      tokens: {
+        promptTokens: calculatedPromptTokens,
+        completionTokens: calculatedCompletionTokens,
+        totalTokens: calculatedTotalTokens
+      },
+      model
+    });
 
     res.write('data: [DONE]\n\n');
     res.end();
@@ -389,6 +568,124 @@ app.get(['/api/tts', '/tts'], async (req, res) => {
     console.error('Lỗi TTS:', err);
     res.status(500).send('Lỗi tạo giọng nói');
   }
+});
+
+app.post('/api/admin/login', (req, res) => {
+  const { password } = req.body || {};
+  if (password === ADMIN_PASSWORD) {
+    res.json({ success: true, token: ADMIN_PASSWORD });
+  } else {
+    res.status(401).json({ success: false, error: 'Sai mật khẩu quản trị! Chỉ có VUA manhdan99 mới được phép vào!' });
+  }
+});
+
+app.get('/api/admin/stats', verifyAdminAuth, async (req, res) => {
+  const logs = await getAllLogs();
+  const totalTokens = logs.reduce((sum, l) => sum + (l.tokens?.totalTokens || 0), 0);
+  const userMap = new Map();
+  for (const log of logs) {
+    const key = log.clientId ? `${log.ip}::${log.clientId}` : log.ip;
+    if (!userMap.has(key)) {
+      userMap.set(key, true);
+    }
+  }
+  res.json({
+    totalMessages: logs.length,
+    totalTokens,
+    totalUsers: userMap.size,
+    blockedCount: blockedSet.size,
+    model: (process.env.LLM_MODEL || 'qwen/qwen3.8-27b')
+  });
+});
+
+app.get('/api/admin/users', verifyAdminAuth, async (req, res) => {
+  const logs = await getAllLogs();
+  const userMap = new Map();
+  for (const log of logs) {
+    const key = log.clientId ? `${log.ip}::${log.clientId}` : log.ip;
+    if (!userMap.has(key)) {
+      userMap.set(key, {
+        userKey: key,
+        ip: log.ip,
+        clientId: log.clientId,
+        device: log.device,
+        messageCount: 0,
+        totalTokens: 0,
+        firstSeen: log.timestamp,
+        lastSeen: log.timestamp,
+        isBlocked: blockedSet.has(log.ip) || (log.clientId && blockedSet.has(log.clientId))
+      });
+    }
+    const u = userMap.get(key);
+    u.messageCount++;
+    u.totalTokens += (log.tokens?.totalTokens || 0);
+    if (log.timestamp > u.lastSeen) {
+      u.lastSeen = log.timestamp;
+      u.device = log.device;
+    }
+    if (log.timestamp < u.firstSeen) {
+      u.firstSeen = log.timestamp;
+    }
+  }
+  const userList = Array.from(userMap.values()).sort((a, b) => b.lastSeen - a.lastSeen);
+  res.json(userList);
+});
+
+app.get('/api/admin/logs', verifyAdminAuth, async (req, res) => {
+  const logs = await getAllLogs();
+  const { userKey, search, limit = 200 } = req.query;
+  let filtered = logs;
+  if (userKey) {
+    filtered = filtered.filter(l => {
+      const key = l.clientId ? `${l.ip}::${l.clientId}` : l.ip;
+      return key === userKey || l.ip === userKey || l.clientId === userKey;
+    });
+  }
+  if (search) {
+    const q = search.toLowerCase();
+    filtered = filtered.filter(l =>
+      (l.userMessage && l.userMessage.toLowerCase().includes(q)) ||
+      (l.botResponse && l.botResponse.toLowerCase().includes(q)) ||
+      (l.ip && l.ip.includes(q)) ||
+      (l.device && l.device.toLowerCase().includes(q))
+    );
+  }
+  res.json(filtered.slice(0, parseInt(limit, 10)));
+});
+
+app.post('/api/admin/block', verifyAdminAuth, async (req, res) => {
+  const { target, action } = req.body || {};
+  if (!target) return res.status(400).json({ error: 'Thiếu mục tiêu chặn' });
+  await blockTarget(target, action || 'block');
+  res.json({ success: true, target, isBlocked: action !== 'unblock' });
+});
+
+app.delete('/api/admin/logs', verifyAdminAuth, (req, res) => {
+  const { userKey } = req.query;
+  if (userKey) {
+    for (let i = chatLogs.length - 1; i >= 0; i--) {
+      const l = chatLogs[i];
+      const key = l.clientId ? `${l.ip}::${l.clientId}` : l.ip;
+      if (key === userKey || l.ip === userKey || l.clientId === userKey) {
+        chatLogs.splice(i, 1);
+      }
+    }
+  } else {
+    chatLogs.length = 0;
+  }
+  saveLocalLogs();
+  res.json({ success: true });
+});
+
+app.get('/api/admin/export', verifyAdminAuth, async (req, res) => {
+  const logs = await getAllLogs();
+  res.setHeader('Content-Type', 'application/json');
+  res.setHeader('Content-Disposition', `attachment; filename="adudu_chat_logs_${Date.now()}.json"`);
+  res.send(JSON.stringify(logs, null, 2));
+});
+
+app.get(['/admin', '/admin.html'], (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 
 if (!process.env.VERCEL) {
