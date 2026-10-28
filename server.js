@@ -223,8 +223,8 @@ function rateAndTokenLimitMiddleware(req, res, next) {
 
   if (blockedSet.has(ip) || (clientId && blockedSet.has(clientId))) {
     return res.status(403).json({
-      error: 'Địt mẹ mày con lợn! Mày đã bị VUA manhdan99 và Adudu tống cổ vào danh sách đen rồi! Cút ngay lập tức đừng hòng vào đây sủa nữa!',
-      aduduJoke: 'Hahaha! Bị tống vào danh sách đen rồi con lợn ạ! Cút ra chỗ khác chơi!',
+      error: 'm bị adudu đá rồi,thời gian nhắn cho adudu mày mua cho ông bà già mày hộp sữa con lợn ạ hahahahh',
+      aduduJoke: 'Hahaha! m bị adudu đá rồi,thời gian nhắn cho adudu mày mua cho ông bà già mày hộp sữa con lợn ạ hahahahh',
       code: 'USER_BLOCKED'
     });
   }

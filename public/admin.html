@@ -6,36 +6,65 @@
   <title>Trang không tồn tại</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #0b0f19;
-      --card-bg: #111827;
-      --card-border: #1f2937;
-      --accent: #10b981;
-      --accent-glow: rgba(16, 185, 129, 0.2);
-      --primary: #3b82f6;
+      --bg: #070a13;
+      --bg-surface: #0e1424;
+      --bg-surface-elevated: #141d33;
+      --border: rgba(255, 255, 255, 0.08);
+      --border-focus: rgba(99, 102, 241, 0.5);
+      --accent-emerald: #10b981;
+      --accent-emerald-glow: rgba(16, 185, 129, 0.25);
+      --accent-blue: #3b82f6;
+      --accent-purple: #8b5cf6;
+      --accent-gold: #f59e0b;
+      --accent-gold-glow: rgba(245, 158, 11, 0.3);
       --danger: #ef4444;
-      --warning: #f59e0b;
-      --text: #f3f4f6;
-      --text-muted: #9ca3af;
+      --danger-glow: rgba(239, 68, 68, 0.25);
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-sub: #64748b;
     }
+
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      font-family: 'Be Vietnam Pro', sans-serif;
+      font-family: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, sans-serif;
     }
+
     body {
       background-color: var(--bg);
-      color: var(--text);
+      background-image: 
+        radial-gradient(circle at 15% 15%, rgba(16, 185, 129, 0.04) 0%, transparent 45%),
+        radial-gradient(circle at 85% 85%, rgba(59, 130, 246, 0.04) 0%, transparent 45%);
+      color: var(--text-main);
       min-height: 100vh;
       display: flex;
       flex-direction: column;
+      overflow-x: hidden;
     }
+
     .hidden {
       display: none !important;
     }
+
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.2);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.25);
+    }
+
     .disguise-view {
       flex: 1;
       display: flex;
@@ -43,366 +72,542 @@
       align-items: center;
       justify-content: center;
       height: 100vh;
-      color: #6b7280;
+      color: #475569;
       user-select: none;
     }
+
     .disguise-text {
-      font-size: 16px;
+      font-size: 15px;
       font-weight: 400;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.6px;
+      opacity: 0.8;
+      transition: opacity 0.3s;
     }
+
+    .disguise-text:hover {
+      opacity: 1;
+      color: #64748b;
+    }
+
     .secret-crown-trigger {
       position: fixed;
-      bottom: 24px;
-      right: 24px;
+      bottom: 22px;
+      right: 22px;
       width: 44px;
       height: 44px;
       border-radius: 50%;
-      background: rgba(31, 41, 55, 0.6);
-      border: 1px solid rgba(75, 85, 99, 0.4);
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.1);
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 20px;
       cursor: pointer;
-      opacity: 0.35;
-      transition: all 0.3s ease;
+      opacity: 0.3;
+      transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
       z-index: 100;
-      backdrop-filter: blur(4px);
+      backdrop-filter: blur(8px);
     }
+
     .secret-crown-trigger:hover {
       opacity: 1;
-      transform: scale(1.1);
-      border-color: #f59e0b;
-      box-shadow: 0 0 15px rgba(245, 158, 11, 0.3);
-      background: rgba(31, 41, 55, 0.9);
+      transform: scale(1.12) rotate(6deg);
+      border-color: var(--accent-gold);
+      box-shadow: 0 0 24px var(--accent-gold-glow);
+      background: rgba(20, 29, 51, 0.95);
     }
+
     .modal-backdrop {
       position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.75);
-      backdrop-filter: blur(6px);
+      inset: 0;
+      background: rgba(3, 7, 18, 0.82);
+      backdrop-filter: blur(10px);
       display: flex;
       align-items: center;
       justify-content: center;
       z-index: 200;
       padding: 20px;
     }
+
     .modal-card {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 16px;
-      padding: 30px 24px;
+      background: linear-gradient(145deg, #101728 0%, #0c1220 100%);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 20px;
+      padding: 34px 28px;
       width: 100%;
-      max-width: 380px;
+      max-width: 400px;
       text-align: center;
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
-      animation: modalFadeIn 0.2s ease-out;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8), 0 0 40px rgba(245, 158, 11, 0.08);
+      animation: modalPop 0.25s cubic-bezier(0.16, 1, 0.3, 1);
     }
-    @keyframes modalFadeIn {
-      from { opacity: 0; transform: scale(0.95); }
-      to { opacity: 1; transform: scale(1); }
+
+    @keyframes modalPop {
+      from { opacity: 0; transform: scale(0.92) translateY(10px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
     }
-    .modal-icon {
-      font-size: 32px;
-      margin-bottom: 12px;
-      display: inline-block;
+
+    .modal-icon-badge {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: rgba(245, 158, 11, 0.12);
+      border: 1.5px solid rgba(245, 158, 11, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 30px;
+      margin: 0 auto 18px;
+      box-shadow: 0 0 20px rgba(245, 158, 11, 0.2);
     }
+
     .modal-title {
-      font-size: 18px;
+      font-size: 20px;
       font-weight: 700;
       color: #fff;
       margin-bottom: 6px;
+      letter-spacing: -0.2px;
     }
+
     .modal-sub {
       font-size: 13px;
       color: var(--text-muted);
-      margin-bottom: 20px;
+      margin-bottom: 22px;
+      line-height: 1.4;
     }
+
     .form-input {
       width: 100%;
-      padding: 12px 14px;
-      background: #1f2937;
-      border: 1px solid #374151;
-      border-radius: 8px;
+      padding: 13px 16px;
+      background: #151e33;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 10px;
       color: #fff;
       font-size: 14px;
       outline: none;
       transition: all 0.2s;
-      margin-bottom: 14px;
+      margin-bottom: 16px;
     }
+
     .form-input:focus {
-      border-color: #f59e0b;
-      box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.2);
+      border-color: var(--accent-gold);
+      box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.18);
+      background: #19243d;
     }
+
     .modal-actions {
       display: flex;
       gap: 10px;
     }
+
     .btn-submit {
       flex: 1;
-      padding: 11px;
-      background: #f59e0b;
+      padding: 12px;
+      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
       color: #000;
       font-weight: 700;
       font-size: 14px;
       border: none;
-      border-radius: 8px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+    }
+
+    .btn-submit:hover {
+      filter: brightness(1.1);
+      transform: translateY(-1px);
+    }
+
+    .btn-cancel {
+      padding: 12px 18px;
+      background: #1c263c;
+      color: var(--text-muted);
+      font-size: 14px;
+      font-weight: 600;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 10px;
       cursor: pointer;
       transition: all 0.2s;
     }
-    .btn-submit:hover {
-      background: #d97706;
-      color: #fff;
-    }
-    .btn-cancel {
-      padding: 11px 16px;
-      background: #1f2937;
-      color: var(--text-muted);
-      font-size: 14px;
-      font-weight: 500;
-      border: 1px solid #374151;
-      border-radius: 8px;
-      cursor: pointer;
-    }
+
     .btn-cancel:hover {
       color: #fff;
-      background: #374151;
+      background: #253350;
     }
+
     .login-err {
       color: var(--danger);
       font-size: 13px;
-      margin-top: 10px;
-      min-height: 18px;
+      margin-top: 12px;
+      min-height: 20px;
+      font-weight: 500;
     }
+
     .admin-header {
-      background: #111827;
-      border-bottom: 1px solid #1f2937;
-      padding: 14px 24px;
+      background: rgba(14, 20, 36, 0.85);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 28px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       position: sticky;
       top: 0;
       z-index: 50;
+      backdrop-filter: blur(12px);
     }
+
     .brand-section {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 14px;
     }
+
     .brand-img {
-      width: 36px;
-      height: 36px;
+      width: 40px;
+      height: 40px;
       border-radius: 50%;
-      border: 2px solid var(--accent);
+      border: 2px solid var(--accent-emerald);
+      box-shadow: 0 0 15px var(--accent-emerald-glow);
     }
+
+    .brand-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
     .brand-title {
-      font-size: 18px;
-      font-weight: 700;
-      color: #34d399;
-      letter-spacing: 0.5px;
+      font-size: 17px;
+      font-weight: 800;
+      letter-spacing: 0.3px;
+      background: linear-gradient(135deg, #34d399 0%, #60a5fa 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
     }
+
     .brand-tag {
-      background: rgba(245, 158, 11, 0.15);
+      background: rgba(245, 158, 11, 0.12);
       color: #fbbf24;
       font-size: 11px;
       font-weight: 700;
-      padding: 2px 8px;
-      border-radius: 4px;
-      margin-left: 8px;
-      border: 1px solid rgba(245, 158, 11, 0.3);
+      padding: 3px 8px;
+      border-radius: 6px;
+      border: 1px solid rgba(245, 158, 11, 0.25);
     }
+
+    .live-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #34d399;
+      background: rgba(16, 185, 129, 0.1);
+      padding: 3px 10px;
+      border-radius: 20px;
+      border: 1px solid rgba(16, 185, 129, 0.25);
+    }
+
+    .live-dot {
+      width: 6px;
+      height: 6px;
+      background: #10b981;
+      border-radius: 50%;
+      box-shadow: 0 0 8px #10b981;
+      animation: pulseDot 2s infinite;
+    }
+
+    @keyframes pulseDot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
+    }
+
     .header-actions {
       display: flex;
       align-items: center;
       gap: 10px;
     }
+
     .btn-header {
       padding: 8px 14px;
-      border-radius: 6px;
+      border-radius: 8px;
       font-size: 13px;
       font-weight: 600;
-      border: 1px solid #374151;
-      background: #1f2937;
-      color: var(--text);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: #172138;
+      color: var(--text-main);
       cursor: pointer;
       display: inline-flex;
       align-items: center;
-      gap: 6px;
+      gap: 7px;
       transition: all 0.2s;
     }
+
     .btn-header:hover {
-      background: #374151;
+      background: #202d4c;
+      border-color: rgba(255, 255, 255, 0.2);
+      transform: translateY(-1px);
     }
-    .btn-danger {
-      border-color: rgba(239, 68, 68, 0.4);
-      background: rgba(239, 68, 68, 0.1);
+
+    .btn-danger-ghost {
+      border-color: rgba(239, 68, 68, 0.3);
+      background: rgba(239, 68, 68, 0.08);
       color: #f87171;
     }
-    .btn-danger:hover {
+
+    .btn-danger-ghost:hover {
       background: var(--danger);
       color: #fff;
+      border-color: var(--danger);
     }
+
     .admin-main {
-      padding: 20px 24px;
+      padding: 24px 28px;
       flex: 1;
       display: flex;
       flex-direction: column;
-      gap: 20px;
-      max-width: 1600px;
+      gap: 22px;
+      max-width: 1680px;
       margin: 0 auto;
       width: 100%;
     }
+
     .stats-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
       gap: 16px;
     }
+
     .stat-card {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 12px;
-      padding: 18px 20px;
+      background: linear-gradient(135deg, rgba(20, 29, 51, 0.7) 0%, rgba(14, 20, 36, 0.9) 100%);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px 22px;
       position: relative;
       overflow: hidden;
+      backdrop-filter: blur(10px);
+      transition: all 0.25s;
     }
-    .stat-card::after {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 4px;
-      height: 100%;
-      background: var(--accent);
+
+    .stat-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(255, 255, 255, 0.18);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
     }
-    .stat-card.blue::after { background: var(--primary); }
-    .stat-card.yellow::after { background: var(--warning); }
-    .stat-card.red::after { background: var(--danger); }
+
+    .stat-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
     .stat-label {
       font-size: 13px;
+      font-weight: 600;
       color: var(--text-muted);
-      margin-bottom: 6px;
     }
+
+    .stat-icon {
+      font-size: 20px;
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.05);
+    }
+
     .stat-val {
-      font-size: 28px;
-      font-weight: 700;
+      font-size: 30px;
+      font-weight: 800;
       color: #fff;
+      letter-spacing: -0.5px;
+      font-family: 'JetBrains Mono', monospace;
     }
+
     .stat-sub {
       font-size: 12px;
-      color: #9ca3af;
-      margin-top: 4px;
+      color: var(--text-sub);
+      margin-top: 6px;
     }
+
+    .stat-blue .stat-icon { background: rgba(59, 130, 246, 0.12); color: #60a5fa; }
+    .stat-purple .stat-icon { background: rgba(139, 92, 246, 0.12); color: #a78bfa; }
+    .stat-emerald .stat-icon { background: rgba(16, 185, 129, 0.12); color: #34d399; }
+    .stat-red .stat-icon { background: rgba(239, 68, 68, 0.12); color: #f87171; }
+
     .workspace {
       display: grid;
-      grid-template-columns: 420px 1fr;
+      grid-template-columns: 440px 1fr;
       gap: 20px;
       flex: 1;
-      min-height: 600px;
+      min-height: 640px;
     }
-    @media (max-width: 900px) {
+
+    @media (max-width: 1024px) {
       .workspace {
         grid-template-columns: 1fr;
       }
     }
+
     .panel {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 12px;
+      background: linear-gradient(180deg, rgba(17, 24, 39, 0.8) 0%, rgba(13, 19, 32, 0.95) 100%);
+      border: 1px solid var(--border);
+      border-radius: 18px;
       display: flex;
       flex-direction: column;
       overflow: hidden;
-      height: calc(100vh - 280px);
-      min-height: 500px;
+      height: calc(100vh - 290px);
+      min-height: 520px;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.35);
     }
+
     .panel-header {
-      padding: 14px 18px;
-      border-bottom: 1px solid var(--card-border);
-      background: #131c2e;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(20, 29, 51, 0.6);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 10px;
+      gap: 12px;
     }
+
     .panel-title {
       font-size: 15px;
       font-weight: 700;
-      color: #e5e7eb;
+      color: #e2e8f0;
       display: flex;
       align-items: center;
       gap: 8px;
     }
+
     .search-input {
-      padding: 8px 12px;
-      border-radius: 6px;
-      background: #1f2937;
-      border: 1px solid #374151;
+      padding: 8px 14px;
+      border-radius: 8px;
+      background: #172138;
+      border: 1px solid rgba(255, 255, 255, 0.1);
       color: #fff;
       font-size: 13px;
       outline: none;
-      width: 180px;
+      width: 200px;
+      transition: all 0.2s;
     }
+
     .search-input:focus {
-      border-color: var(--accent);
+      border-color: var(--accent-blue);
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+      width: 220px;
     }
+
+    .filter-pills {
+      display: flex;
+      gap: 6px;
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(15, 23, 42, 0.4);
+    }
+
+    .filter-btn {
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .filter-btn.active {
+      background: #1e293b;
+      color: #fff;
+      border-color: rgba(255, 255, 255, 0.12);
+    }
+
     .user-list {
       flex: 1;
       overflow-y: auto;
-      padding: 10px;
+      padding: 12px;
       display: flex;
       flex-direction: column;
       gap: 8px;
     }
+
     .user-item {
-      padding: 12px 14px;
-      border-radius: 8px;
-      background: #182234;
-      border: 1px solid #283548;
+      padding: 14px 16px;
+      border-radius: 12px;
+      background: rgba(24, 34, 56, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.05);
       cursor: pointer;
-      transition: all 0.2s;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
     }
+
     .user-item:hover {
-      background: #1f2d45;
-      border-color: #3b82f6;
+      background: rgba(30, 43, 70, 0.75);
+      border-color: rgba(99, 102, 241, 0.4);
+      transform: translateX(3px);
     }
+
     .user-item.active {
-      background: #1e3a5f;
+      background: linear-gradient(135deg, rgba(30, 58, 95, 0.9) 0%, rgba(20, 40, 75, 0.8) 100%);
       border-color: #60a5fa;
-      box-shadow: 0 0 12px rgba(96, 165, 250, 0.2);
+      box-shadow: 0 0 20px rgba(96, 165, 250, 0.18);
     }
+
+    .user-item.active::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 12px;
+      bottom: 12px;
+      width: 4px;
+      border-radius: 0 4px 4px 0;
+      background: #60a5fa;
+    }
+
     .user-item.blocked {
       border-color: rgba(239, 68, 68, 0.4);
-      background: rgba(239, 68, 68, 0.08);
+      background: rgba(239, 68, 68, 0.06);
     }
+
     .user-top {
       display: flex;
       align-items: center;
       justify-content: space-between;
       margin-bottom: 6px;
     }
+
     .user-ip {
       font-size: 14px;
       font-weight: 700;
       color: #93c5fd;
-      font-family: monospace;
+      font-family: 'JetBrains Mono', monospace;
     }
+
     .badge-blocked {
-      background: #ef4444;
+      background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
       color: #fff;
       font-size: 10px;
-      font-weight: 700;
-      padding: 2px 6px;
+      font-weight: 800;
+      padding: 2px 7px;
       border-radius: 4px;
+      letter-spacing: 0.4px;
     }
+
     .user-device {
       font-size: 12px;
       color: #cbd5e1;
-      margin-bottom: 8px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
+
     .user-meta {
       display: flex;
       align-items: center;
@@ -410,67 +615,125 @@
       font-size: 11px;
       color: var(--text-muted);
     }
+
     .token-pill {
-      background: rgba(16, 185, 129, 0.15);
+      background: rgba(16, 185, 129, 0.12);
       color: #34d399;
-      padding: 2px 8px;
+      border: 1px solid rgba(16, 185, 129, 0.25);
+      padding: 2px 9px;
       border-radius: 12px;
-      font-weight: 600;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
     }
+
     .chat-view {
       flex: 1;
       display: flex;
       flex-direction: column;
       overflow: hidden;
     }
+
     .chat-target-header {
-      padding: 12px 18px;
-      background: #162032;
-      border-bottom: 1px solid var(--card-border);
+      padding: 14px 22px;
+      background: rgba(22, 32, 53, 0.7);
+      border-bottom: 1px solid var(--border);
       display: flex;
       align-items: center;
       justify-content: space-between;
       flex-wrap: wrap;
-      gap: 10px;
+      gap: 12px;
+      backdrop-filter: blur(8px);
     }
+
     .chat-target-info {
       display: flex;
       flex-direction: column;
-      gap: 2px;
+      gap: 3px;
     }
+
+    .chat-target-ip-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
     .chat-target-ip {
-      font-size: 15px;
-      font-weight: 700;
+      font-size: 16px;
+      font-weight: 800;
       color: #60a5fa;
-      font-family: monospace;
+      font-family: 'JetBrains Mono', monospace;
     }
+
     .chat-target-details {
       font-size: 12px;
       color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
+
+    .btn-block-action {
+      padding: 9px 18px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+      border: none;
+    }
+
+    .btn-block-red {
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+      color: #fff;
+      box-shadow: 0 4px 14px var(--danger-glow);
+    }
+
+    .btn-block-red:hover {
+      filter: brightness(1.1);
+      transform: translateY(-1px);
+    }
+
+    .btn-unblock-green {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: #fff;
+      box-shadow: 0 4px 14px var(--accent-emerald-glow);
+    }
+
+    .btn-unblock-green:hover {
+      filter: brightness(1.1);
+      transform: translateY(-1px);
+    }
+
     .messages-scroll {
       flex: 1;
       overflow-y: auto;
-      padding: 20px;
+      padding: 24px;
       display: flex;
       flex-direction: column;
-      gap: 16px;
-      background: #0d131f;
+      gap: 18px;
+      background: #090e1a;
     }
+
     .msg-group {
       display: flex;
       flex-direction: column;
-      gap: 8px;
-      background: #131c2e;
-      border: 1px solid #233149;
-      border-radius: 10px;
-      padding: 14px 16px;
+      gap: 10px;
+      background: #111a2d;
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 14px;
+      padding: 16px 18px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
     }
+
     .msg-row {
       display: flex;
       flex-direction: column;
-      gap: 4px;
+      gap: 6px;
     }
+
     .msg-sender {
       font-size: 12px;
       font-weight: 700;
@@ -478,52 +741,87 @@
       align-items: center;
       justify-content: space-between;
     }
+
     .sender-user { color: #60a5fa; }
     .sender-adudu { color: #34d399; }
+
     .msg-time {
       font-size: 11px;
-      color: #64748b;
+      color: var(--text-sub);
       font-weight: normal;
+      font-family: 'JetBrains Mono', monospace;
     }
+
     .msg-bubble {
-      padding: 10px 14px;
-      border-radius: 8px;
+      padding: 12px 16px;
+      border-radius: 10px;
       font-size: 14px;
-      line-height: 1.5;
+      line-height: 1.55;
       word-break: break-word;
       white-space: pre-wrap;
     }
+
     .bubble-user {
-      background: #1e293b;
+      background: #19243c;
       color: #f1f5f9;
       border-left: 3px solid #3b82f6;
     }
+
     .bubble-adudu {
-      background: #064e3b;
+      background: linear-gradient(135deg, #07382c 0%, #052920 100%);
       color: #ecfdf5;
       border-left: 3px solid #10b981;
+      box-shadow: 0 4px 15px rgba(16, 185, 129, 0.08);
     }
+
     .token-breakdown {
       margin-top: 4px;
       font-size: 11px;
       color: #94a3b8;
       display: flex;
-      gap: 12px;
-      font-family: monospace;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+      font-family: 'JetBrains Mono', monospace;
     }
+
+    .token-breakdown-total {
+      color: #34d399;
+      font-weight: 700;
+      background: rgba(16, 185, 129, 0.1);
+      padding: 2px 8px;
+      border-radius: 6px;
+      border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
     .empty-state {
       flex: 1;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      color: #64748b;
-      gap: 12px;
+      color: var(--text-sub);
+      gap: 14px;
       padding: 40px;
       text-align: center;
     }
+
     .empty-icon {
-      font-size: 48px;
+      font-size: 42px;
+      opacity: 0.8;
+    }
+
+    .empty-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .empty-desc {
+      font-size: 13px;
+      color: var(--text-sub);
+      max-width: 380px;
+      line-height: 1.5;
     }
   </style>
 </head>
@@ -531,13 +829,13 @@
 
   <div id="disguiseScreen" class="disguise-view">
     <div class="disguise-text">Không có gì ở đây cả</div>
-    <div id="secretCrownBtn" class="secret-crown-trigger" title="Crown">👑</div>
+    <div id="secretCrownBtn" class="secret-crown-trigger" title="Xác thực">👑</div>
   </div>
 
   <div id="authModal" class="modal-backdrop hidden">
     <div class="modal-card">
-      <div class="modal-icon">👑</div>
-      <div class="modal-title">Xác thực quyền hạn</div>
+      <div class="modal-icon-badge">👑</div>
+      <div class="modal-title">Xác Thực Quyền Hạn</div>
       <div class="modal-sub">Vui lòng nhập mật khẩu để mở giao diện quản trị</div>
       
       <input type="password" id="adminPass" class="form-input" placeholder="Nhập mật khẩu..." autofocus>
@@ -555,9 +853,13 @@
     <header class="admin-header">
       <div class="brand-section">
         <img src="assets/adudu.png" alt="Adudu" class="brand-img" onerror="this.src='assets/adudu-default.svg'">
-        <div>
+        <div class="brand-title-wrap">
           <span class="brand-title">BẢNG QUẢN TRỊ HỆ THỐNG</span>
           <span class="brand-tag">manhdan99</span>
+        </div>
+        <div class="live-indicator">
+          <span class="live-dot"></span>
+          <span>Trực tuyến</span>
         </div>
       </div>
       <div class="header-actions">
@@ -567,7 +869,7 @@
         <button id="btnExport" class="btn-header" title="Tải toàn bộ file lịch sử JSON">
           <span>📥</span> Xuất JSON
         </button>
-        <button id="btnClear" class="btn-header btn-danger" title="Xóa toàn bộ lịch sử">
+        <button id="btnClear" class="btn-header btn-danger-ghost" title="Xóa toàn bộ lịch sử">
           <span>🗑️</span> Xóa sạch
         </button>
         <button id="btnLogout" class="btn-header" title="Đăng xuất">
@@ -578,38 +880,60 @@
 
     <main class="admin-main">
       <div class="stats-grid">
-        <div class="stat-card blue">
-          <div class="stat-label">Tổng người dùng (IP)</div>
+        <div class="stat-card stat-blue">
+          <div class="stat-top">
+            <span class="stat-label">Tổng người dùng (IP)</span>
+            <div class="stat-icon">👥</div>
+          </div>
           <div class="stat-val" id="statUsers">0</div>
           <div class="stat-sub">Đã truy cập chatbot</div>
         </div>
-        <div class="stat-card yellow">
-          <div class="stat-label">Tổng câu hỏi đã xử lý</div>
+
+        <div class="stat-card stat-purple">
+          <div class="stat-top">
+            <span class="stat-label">Tổng câu hỏi đã xử lý</span>
+            <div class="stat-icon">💬</div>
+          </div>
           <div class="stat-val" id="statMessages">0</div>
-          <div class="stat-sub">Tin nhắn gửi lên</div>
+          <div class="stat-sub">Lượt nhắn tin gửi lên</div>
         </div>
-        <div class="stat-card">
-          <div class="stat-label">Tổng token đã đốt</div>
+
+        <div class="stat-card stat-emerald">
+          <div class="stat-top">
+            <span class="stat-label">Tổng token đã đốt</span>
+            <div class="stat-icon">⚡</div>
+          </div>
           <div class="stat-val" id="statTokens">0</div>
-          <div class="stat-sub">Tokens tiêu hao</div>
+          <div class="stat-sub">Tokens tiêu hao toàn bộ</div>
         </div>
-        <div class="stat-card red">
-          <div class="stat-label">Thiết bị đang bị chặn</div>
+
+        <div class="stat-card stat-red">
+          <div class="stat-top">
+            <span class="stat-label">Thiết bị đang bị chặn</span>
+            <div class="stat-icon">🚫</div>
+          </div>
           <div class="stat-val" id="statBlocked">0</div>
-          <div class="stat-sub">Trong danh sách đen</div>
+          <div class="stat-sub">Trong danh sách cấm</div>
         </div>
       </div>
 
       <div class="workspace">
         <div class="panel">
           <div class="panel-header">
-            <span class="panel-title">👥 Danh sách thiết bị / IP</span>
-            <input type="text" id="userSearch" class="search-input" placeholder="Lọc IP / máy...">
+            <span class="panel-title">👥 Danh sách người dùng</span>
+            <input type="text" id="userSearch" class="search-input" placeholder="Tìm IP, thiết bị...">
           </div>
+
+          <div class="filter-pills">
+            <button class="filter-btn active" data-filter="all">Tất cả</button>
+            <button class="filter-btn" data-filter="active">Đang hoạt động</button>
+            <button class="filter-btn" data-filter="blocked">Đã chặn</button>
+          </div>
+
           <div class="user-list" id="userListContainer">
             <div class="empty-state">
               <div class="empty-icon">⏳</div>
-              <p>Đang tải danh sách người dùng...</p>
+              <div class="empty-title">Đang tải danh sách...</div>
             </div>
           </div>
         </div>
@@ -617,11 +941,13 @@
         <div class="panel">
           <div id="chatTargetHeader" class="chat-target-header hidden">
             <div class="chat-target-info">
-              <div class="chat-target-ip" id="selectedUserIp">127.0.0.1</div>
+              <div class="chat-target-ip-wrap">
+                <span class="chat-target-ip" id="selectedUserIp">127.0.0.1</span>
+              </div>
               <div class="chat-target-details" id="selectedUserDetails">Thiết bị • Lần cuối</div>
             </div>
             <div>
-              <button id="btnToggleBlock" class="btn-header btn-danger">🚫 Chặn IP này</button>
+              <button id="btnToggleBlock" class="btn-block-action btn-block-red">🚫 Chặn thiết bị này</button>
             </div>
           </div>
 
@@ -629,7 +955,8 @@
             <div class="messages-scroll" id="messagesContainer">
               <div class="empty-state" id="emptyChatPlaceholder">
                 <div class="empty-icon">👈</div>
-                <p>Hãy chọn một người dùng ở danh sách bên trái để xem toàn bộ tin nhắn họ đã hỏi và câu trả lời của Adudu!</p>
+                <div class="empty-title">Chưa chọn người dùng</div>
+                <div class="empty-desc">Hãy bấm vào một người dùng ở danh sách bên trái để xem chi tiết lịch sử tin nhắn và lượng token tiêu tốn!</div>
               </div>
             </div>
           </div>
@@ -643,6 +970,7 @@
     let currentAdminKey = sessionStorage.getItem(AUTH_KEY) || '';
     let allUsers = [];
     let selectedUserKey = null;
+    let currentFilter = 'all';
 
     const el = {
       disguiseScreen: document.getElementById('disguiseScreen'),
@@ -677,6 +1005,7 @@
       } else {
         showDisguise();
       }
+      setupFilterButtons();
     }
 
     function showDisguise() {
@@ -690,7 +1019,7 @@
       el.authModal.classList.remove('hidden');
       el.adminPass.value = '';
       el.loginErr.textContent = '';
-      setTimeout(() => el.adminPass.focus(), 100);
+      setTimeout(() => el.adminPass.focus(), 120);
     }
 
     function closeModal() {
@@ -778,6 +1107,17 @@
 
     el.userSearch.addEventListener('input', renderUserList);
 
+    function setupFilterButtons() {
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          currentFilter = btn.dataset.filter;
+          renderUserList();
+        });
+      });
+    }
+
     async function loadAllData() {
       try {
         const [statsRes, usersRes] = await Promise.all([
@@ -809,18 +1149,24 @@
 
     function renderUserList() {
       const query = el.userSearch.value.trim().toLowerCase();
-      const filtered = allUsers.filter(u => {
+      let filtered = allUsers.filter(u => {
         if (!query) return true;
         return (u.ip && u.ip.toLowerCase().includes(query)) ||
                (u.device && u.device.toLowerCase().includes(query)) ||
                (u.clientId && u.clientId.toLowerCase().includes(query));
       });
 
+      if (currentFilter === 'active') {
+        filtered = filtered.filter(u => !u.isBlocked);
+      } else if (currentFilter === 'blocked') {
+        filtered = filtered.filter(u => u.isBlocked);
+      }
+
       if (filtered.length === 0) {
         el.userListContainer.innerHTML = `
           <div class="empty-state">
             <div class="empty-icon">🔍</div>
-            <p>${allUsers.length === 0 ? 'Chưa có ai nhắn tin nào cả!' : 'Không tìm thấy người dùng phù hợp'}</p>
+            <div class="empty-title">${allUsers.length === 0 ? 'Chưa có ai nhắn tin nào cả!' : 'Không tìm thấy kết quả phù hợp'}</div>
           </div>
         `;
         return;
@@ -838,7 +1184,7 @@
             <div class="user-device">💻 ${escapeHtml(u.device || 'Thiết bị lạ')}</div>
             <div class="user-meta">
               <span>💬 ${u.messageCount} câu</span>
-              <span class="token-pill">⚡ ${Number(u.totalTokens || 0).toLocaleString()} tokens</span>
+              <span class="token-pill">⚡ ${Number(u.totalTokens || 0).toLocaleString()}</span>
               <span>${timeStr}</span>
             </div>
           </div>
@@ -861,11 +1207,11 @@
       el.selectedUserDetails.textContent = `${user.device} • Tổng token: ${Number(user.totalTokens).toLocaleString()} • Client ID: ${user.clientId}`;
 
       if (user.isBlocked) {
-        el.btnToggleBlock.textContent = '✅ Bỏ chặn IP này';
-        el.btnToggleBlock.classList.remove('btn-danger');
+        el.btnToggleBlock.textContent = '✅ Bỏ chặn thiết bị';
+        el.btnToggleBlock.className = 'btn-block-action btn-unblock-green';
       } else {
-        el.btnToggleBlock.textContent = '🚫 Chặn IP này';
-        el.btnToggleBlock.classList.add('btn-danger');
+        el.btnToggleBlock.textContent = '🚫 Chặn thiết bị này';
+        el.btnToggleBlock.className = 'btn-block-action btn-block-red';
       }
 
       el.btnToggleBlock.onclick = async () => {
@@ -903,7 +1249,8 @@
         el.messagesContainer.innerHTML = `
           <div class="empty-state">
             <div class="empty-icon">📭</div>
-            <p>Không có tin nhắn nào từ người này!</p>
+            <div class="empty-title">Không có tin nhắn nào</div>
+            <div class="empty-desc">Chưa có lịch sử hội thoại được ghi nhận cho người dùng này.</div>
           </div>
         `;
         return;
@@ -928,7 +1275,7 @@
 
             <div class="msg-row">
               <div class="msg-sender sender-adudu">
-                <span>👽 Adudu phản hồi</span>
+                <span>👽 Adudu</span>
               </div>
               <div class="msg-bubble bubble-adudu">${escapeHtml(log.botResponse || '')}</div>
               <div class="token-breakdown">
@@ -936,7 +1283,7 @@
                 <span>•</span>
                 <span>Đầu ra: ${cTok} tok</span>
                 <span>•</span>
-                <span style="color: #34d399; font-weight: bold;">Tổng tiêu tốn: ${totTok} tokens</span>
+                <span class="token-breakdown-total">Tổng tiêu hao: ${totTok} tokens</span>
               </div>
             </div>
           </div>
