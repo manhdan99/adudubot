@@ -588,6 +588,15 @@
       font-family: 'JetBrains Mono', monospace;
     }
 
+    .user-name {
+      font-size: 14px;
+      font-weight: 800;
+      color: #38bdf8;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
     .badge-blocked {
       background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
       color: #fff;
@@ -1222,6 +1231,9 @@
             existing.totalTokens = Math.max(existing.totalTokens || 0, u.totalTokens || 0);
             existing.lastSeen = Math.max(existing.lastSeen || 0, u.lastSeen || 0);
             existing.device = u.device || existing.device;
+            if (u.userName && u.userName !== 'Vô danh') {
+              existing.userName = u.userName;
+            }
             if (typeof u.isBlocked === 'boolean') {
               existing.isBlocked = u.isBlocked;
             }
@@ -1268,7 +1280,8 @@
       const query = el.userSearch.value.trim().toLowerCase();
       let filtered = allUsers.filter(u => {
         if (!query) return true;
-        return (u.ip && u.ip.toLowerCase().includes(query)) ||
+        return (u.userName && u.userName.toLowerCase().includes(query)) ||
+               (u.ip && u.ip.toLowerCase().includes(query)) ||
                (u.device && u.device.toLowerCase().includes(query)) ||
                (u.clientId && u.clientId.toLowerCase().includes(query));
       });
@@ -1295,10 +1308,10 @@
         return `
           <div class="user-item ${isSelected ? 'active' : ''} ${u.isBlocked ? 'blocked' : ''}" onclick="selectUser('${u.userKey}')">
             <div class="user-top">
-              <span class="user-ip">${escapeHtml(u.ip)}</span>
+              <span class="user-name">👤 ${escapeHtml(u.userName || 'Vô danh')}</span>
               ${u.isBlocked ? '<span class="badge-blocked">ĐÃ CHẶN</span>' : ''}
             </div>
-            <div class="user-device">💻 ${escapeHtml(u.device || 'Thiết bị lạ')}</div>
+            <div class="user-device">🌐 ${escapeHtml(u.ip)} • 💻 ${escapeHtml(u.device || 'Thiết bị lạ')}</div>
             <div class="user-meta">
               <span>💬 ${u.messageCount} câu</span>
               <span class="token-pill">⚡ ${Number(u.totalTokens || 0).toLocaleString()}</span>
@@ -1320,7 +1333,7 @@
       if (!user) return;
 
       el.chatTargetHeader.classList.remove('hidden');
-      el.selectedUserIp.textContent = user.ip;
+      el.selectedUserIp.textContent = `👤 ${user.userName || 'Vô danh'} (${user.ip})`;
       el.selectedUserDetails.textContent = `${user.device} • Tổng token: ${Number(user.totalTokens).toLocaleString()} • Client ID: ${user.clientId}`;
 
       if (user.isBlocked) {
@@ -1407,7 +1420,7 @@
           <div class="msg-group">
             <div class="msg-row">
               <div class="msg-sender sender-user">
-                <span>👤 Người dùng</span>
+                <span>👤 ${escapeHtml(log.userName || 'Người dùng')}</span>
                 <span class="msg-time">${dateStr}</span>
               </div>
               <div class="msg-bubble bubble-user">${escapeHtml(log.userMessage || '')}</div>

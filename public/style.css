@@ -1462,3 +1462,118 @@ html, body {
     padding: 0 8px;
   }
 }
+
+.name-modal-card {
+  max-width: 430px;
+  padding: 28px 22px;
+  text-align: center;
+  background: radial-gradient(circle at 50% 0%, rgba(16, 185, 129, 0.12), transparent 70%), var(--bg-card);
+  border: 1.5px solid rgba(16, 185, 129, 0.35);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 30px rgba(16, 185, 129, 0.15);
+  border-radius: 20px;
+}
+
+.name-modal-avatar {
+  width: 82px;
+  height: 82px;
+  margin: 0 auto 14px;
+  border-radius: 50%;
+  border: 3px solid #10b981;
+  padding: 3px;
+  background: rgba(16, 185, 129, 0.15);
+  box-shadow: 0 0 25px rgba(16, 185, 129, 0.4);
+}
+
+.name-adudu-img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.name-modal-title {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #10b981;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+}
+
+.name-modal-desc {
+  font-size: 0.92rem;
+  color: var(--text-muted);
+  line-height: 1.45;
+  margin-bottom: 20px;
+}
+
+.name-modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.name-input-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-align: left;
+}
+
+.name-input-field {
+  width: 100%;
+  padding: 13px 16px;
+  font-size: 1rem;
+  border-radius: 12px;
+  background: var(--bg-surface, #0e1424);
+  border: 1.5px solid rgba(255, 255, 255, 0.15);
+  color: var(--text-main);
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.name-input-field:focus {
+  border-color: #10b981;
+  outline: none;
+  box-shadow: 0 0 15px rgba(16, 185, 129, 0.3);
+}
+
+.name-error-msg {
+  font-size: 0.84rem;
+  color: #ef4444;
+  padding: 4px 6px;
+  font-weight: 600;
+}
+
+.name-error-msg.hidden {
+  display: none;
+}
+
+.name-submit-btn {
+  width: 100%;
+  padding: 13px;
+  font-size: 0.98rem;
+  font-weight: 700;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3);
+  transition: all 0.2s ease;
+}
+
+.name-submit-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.45);
+}
+
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 0.82rem;
+  border-radius: 8px;
+}

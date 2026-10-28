@@ -208,6 +208,27 @@
     </div>
   </div>
 
+  <div id="welcomeNameModal" class="modal-dialog-overlay" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="dialog-backdrop"></div>
+    <div class="dialog-card name-modal-card">
+      <div class="name-modal-avatar">
+        <img src="adudu.png" alt="Adudu" class="name-adudu-img">
+      </div>
+      <h3 class="name-modal-title">Xưng tên mày đi nhóc!</h3>
+      <p class="name-modal-desc">Xưng cái tên ra đây để Adudu tao gọi cho dễ, con lợn ạ!</p>
+      <form id="welcomeNameForm" class="name-modal-form" onsubmit="return false;">
+        <div class="name-input-wrap">
+          <input type="text" id="welcomeNameInput" class="name-input-field" maxlength="25" placeholder="Nhập tên xưng danh của mày..." autocomplete="off">
+          <div id="nameValidationError" class="name-error-msg hidden"></div>
+        </div>
+        <button type="submit" id="btnSubmitName" class="name-submit-btn">
+          <span>Xác nhận danh tính</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </button>
+      </form>
+    </div>
+  </div>
+
   <div id="settingsDialog" class="modal-dialog-overlay" role="dialog" aria-modal="true" aria-labelledby="settingsDialogTitle" aria-hidden="true">
     <div class="dialog-backdrop" id="settingsDialogBackdrop"></div>
     <div class="dialog-card">
@@ -219,6 +240,13 @@
       </div>
 
       <div class="dialog-body">
+        <div class="setting-item">
+          <div class="setting-text">
+            <div class="setting-name">Tên xưng danh của mày</div>
+            <div class="setting-hint" id="settingCurrentUserName">Chưa xưng tên</div>
+          </div>
+          <button id="btnChangeUserName" class="btn-secondary btn-sm" type="button">Đổi tên</button>
+        </div>
         <div class="setting-item">
           <div class="setting-text">
             <div class="setting-name">Adudu hiện hình</div>

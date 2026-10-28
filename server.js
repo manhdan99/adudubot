@@ -446,8 +446,22 @@ app.post(['/api/chat', '/chat'], rateAndTokenLimitMiddleware, async (req, res) =
 
   const recentMessages = messages.slice(-10);
 
+  let userName = (req.body.userName || req.headers['x-user-name'] || req.query.userName || '').toString().trim();
+  try {
+    userName = decodeURIComponent(userName);
+  } catch (e) {}
+  userName = userName.replace(/[\r\n\t]+/g, ' ').trim();
+  if (!/^[\p{L}\p{N}\s]{3,30}$/u.test(userName)) {
+    userName = 'Vô danh';
+  }
+
+  let promptForUser = SYSTEM_PROMPT;
+  if (userName && userName !== 'Vô danh') {
+    promptForUser += `\n\nLƯU Ý: Thằng ranh đang nói chuyện với mày xưng tên là "${userName}". Thi thoảng hãy gọi thẳng tên nó (ví dụ: 'thằng ${userName}', 'con lợn ${userName}') để chửi hoặc xưng hô cho đúng!`;
+  }
+
   const finalMessages = [
-    { role: 'system', content: SYSTEM_PROMPT },
+    { role: 'system', content: promptForUser },
     ...recentMessages
   ];
 
@@ -546,6 +560,7 @@ app.post(['/api/chat', '/chat'], rateAndTokenLimitMiddleware, async (req, res) =
         timestamp: Date.now(),
         ip: getClientIp(req),
         clientId: (req.headers['x-client-id'] || req.query.client_id || '').toString().trim() || 'an_danh',
+        userName: userName || 'Vô danh',
         device: parseDevice(req.headers['user-agent']),
         userMessage: latestUserMsg,
         botResponse: fullResponseText,
@@ -682,6 +697,7 @@ app.get('/api/admin/users', verifyAdminAuth, async (req, res) => {
         userKey: key,
         ip: log.ip,
         clientId: log.clientId,
+        userName: log.userName || 'Vô danh',
         device: log.device,
         messageCount: 0,
         totalTokens: 0,
@@ -692,7 +708,10 @@ app.get('/api/admin/users', verifyAdminAuth, async (req, res) => {
     }
     const u = userMap.get(key);
     u.messageCount++;
-    u.totalTokens += (log.tokens?.totalTokens || 0);
+    u.totalTokens += (log.tokens?.totalTokens || (typeof log.tokens === 'number' ? log.tokens : 0));
+    if (log.userName && log.userName !== 'Vô danh') {
+      u.userName = log.userName;
+    }
     if (log.timestamp > u.lastSeen) {
       u.lastSeen = log.timestamp;
       u.device = log.device;
@@ -718,6 +737,7 @@ app.get('/api/admin/logs', verifyAdminAuth, async (req, res) => {
   if (search) {
     const q = search.toLowerCase();
     filtered = filtered.filter(l =>
+      (l.userName && l.userName.toLowerCase().includes(q)) ||
       (l.userMessage && l.userMessage.toLowerCase().includes(q)) ||
       (l.botResponse && l.botResponse.toLowerCase().includes(q)) ||
       (l.ip && l.ip.includes(q)) ||

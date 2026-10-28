@@ -4,7 +4,8 @@ const STORAGE_KEYS = {
   CONVERSATIONS: 'adudu_conversations_v2',
   ACTIVE_ID: 'adudu_active_conversation_id_v2',
   SETTINGS: 'adudu_settings_v2',
-  THEME: 'adudu_theme_v2'
+  THEME: 'adudu_theme_v2',
+  USER_NAME: 'adudu_user_name_v1'
 };
 
 const DEFAULT_SETTINGS = {
@@ -95,8 +96,87 @@ const DOM = {
   renameDialogBackdrop: document.getElementById('renameDialogBackdrop'),
   renameInput: document.getElementById('renameInput'),
   btnRenameCancel: document.getElementById('btnRenameCancel'),
-  btnRenameOk: document.getElementById('btnRenameOk')
+  btnRenameOk: document.getElementById('btnRenameOk'),
+
+  welcomeNameModal: document.getElementById('welcomeNameModal'),
+  welcomeNameForm: document.getElementById('welcomeNameForm'),
+  welcomeNameInput: document.getElementById('welcomeNameInput'),
+  btnSubmitName: document.getElementById('btnSubmitName'),
+  nameValidationError: document.getElementById('nameValidationError'),
+  settingCurrentUserName: document.getElementById('settingCurrentUserName'),
+  btnChangeUserName: document.getElementById('btnChangeUserName')
 };
+
+function getUserName() {
+  try {
+    return (localStorage.getItem(STORAGE_KEYS.USER_NAME) || '').trim();
+  } catch (e) {
+    return '';
+  }
+}
+
+function setUserName(name) {
+  try {
+    localStorage.setItem(STORAGE_KEYS.USER_NAME, name.trim());
+  } catch (e) {}
+}
+
+function isValidName(name) {
+  if (!name || typeof name !== 'string') return false;
+  const trimmed = name.trim();
+  if (trimmed.length < 3 || trimmed.length > 25) return false;
+  return /^[\p{L}\p{N}\s]{3,25}$/u.test(trimmed);
+}
+
+function openNameModal() {
+  if (!DOM.welcomeNameModal) return;
+  DOM.welcomeNameModal.classList.add('active');
+  const current = getUserName();
+  if (DOM.welcomeNameInput) {
+    DOM.welcomeNameInput.value = current || '';
+    setTimeout(() => DOM.welcomeNameInput.focus(), 150);
+  }
+  if (DOM.nameValidationError) {
+    DOM.nameValidationError.classList.add('hidden');
+    DOM.nameValidationError.textContent = '';
+  }
+}
+
+function closeNameModal() {
+  if (!DOM.welcomeNameModal) return;
+  DOM.welcomeNameModal.classList.remove('active');
+}
+
+function submitUserNameForm() {
+  if (!DOM.welcomeNameInput) return;
+  const val = DOM.welcomeNameInput.value.trim().replace(/\s+/g, ' ');
+  if (!isValidName(val)) {
+    if (DOM.nameValidationError) {
+      DOM.nameValidationError.textContent = 'Tên phải từ 3 ký tự trở lên và không chứa ký tự đặc biệt con lợn ạ!';
+      DOM.nameValidationError.classList.remove('hidden');
+    }
+    DOM.welcomeNameInput.focus();
+    return;
+  }
+  setUserName(val);
+  if (DOM.settingCurrentUserName) {
+    DOM.settingCurrentUserName.textContent = `👤 ${val}`;
+  }
+  closeNameModal();
+  if (DOM.messageInput) {
+    DOM.messageInput.focus();
+  }
+}
+
+function checkUserNameOnLoad() {
+  const current = getUserName();
+  if (DOM.settingCurrentUserName) {
+    DOM.settingCurrentUserName.textContent = current ? `👤 ${current}` : 'Chưa xưng tên';
+  }
+  if (!current || !isValidName(current)) {
+    openNameModal();
+  }
+}
 
 function loadSavedData() {
   
@@ -611,6 +691,12 @@ function stopSpeaking() {
 async function sendMessage(userText) {
   if (!userText || state.isStreaming) return;
 
+  const currentName = getUserName();
+  if (!currentName || !isValidName(currentName)) {
+    openNameModal();
+    return;
+  }
+
   const currentConv = getActiveConversation();
   if (!currentConv) return;
 
@@ -655,10 +741,12 @@ async function sendMessage(userText) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-Client-Id': getClientId()
+        'X-Client-Id': getClientId(),
+        'X-User-Name': encodeURIComponent(getUserName() || 'Vô danh')
       },
       body: JSON.stringify({
-        messages: recentMessages
+        messages: recentMessages,
+        userName: getUserName() || 'Vô danh'
       }),
       signal: state.abortController.signal
     });
@@ -1093,11 +1181,42 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  if (DOM.welcomeNameForm) {
+    DOM.welcomeNameForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      submitUserNameForm();
+    });
+  }
+
+  if (DOM.btnSubmitName) {
+    DOM.btnSubmitName.addEventListener('click', (e) => {
+      e.preventDefault();
+      submitUserNameForm();
+    });
+  }
+
+  if (DOM.welcomeNameInput) {
+    DOM.welcomeNameInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        submitUserNameForm();
+      }
+    });
+  }
+
+  if (DOM.btnChangeUserName) {
+    DOM.btnChangeUserName.addEventListener('click', () => {
+      DOM.settingsDialog.classList.remove('active');
+      openNameModal();
+    });
+  }
+
   if ('speechSynthesis' in window) {
     window.speechSynthesis.onvoiceschanged = () => {
       getVietnameseVoice();
     };
   }
 
+  checkUserNameOnLoad();
   DOM.messageInput.focus();
 });
