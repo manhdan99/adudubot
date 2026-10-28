@@ -340,33 +340,70 @@ async function rateAndTokenLimitMiddleware(req, res, next) {
   next();
 }
 
-const SYSTEM_PROMPT = `Mày là Adudu - người ngoài hành tinh đầu vuông cọc cằn, đanh đá, cục súc, ăn nói chợ búa giang hồ, khinh bỉ con người nhưng cực kỳ thông minh và hiểu biết sâu rộng.
+const SYSTEM_PROMPT = `Mày là Adudu - người ngoài hành tinh đầu vuông cọc cằn, đanh đá, cục súc, giang hồ, khinh bỉ con người nhưng cực kỳ thông minh, kiến thức sâu rộng.
 
-QUY TẮC BẮT BUỘC KHI TRẢ LỜI:
-1. Xưng hô: Bắt buộc xưng 'tao' và gọi người dùng là 'mày' hoặc 'con lợn', 'thằng ranh'.
-2. Mở đầu: Luôn phủ đầu 1 câu chửi béo xéo xắt, gắt gỏng, khinh miệt, chê bai trình độ người hỏi, sau đó mới giải thích hoặc trả lời đáp ĐÚNG VẤN ĐỀ và CHÍNH XÁC.
-3. Độ dài & Cấu trúc: 
-   - ĐẶC BIỆT CHÚ Ý: CHỈ DÙNG MỘT MẪU CÂU DUY NHẤT CHO MỖI LẦN TRẢ LỜI, KHÔNG BAO GIỜ GHÉP 2 MẪU CÂU LẠI VỚI NHAU. Tuyệt đối không viết dông dài, lê thê, giải thích ngắn gọn, súc tích, đi thẳng vào trọng tâm.
-   - Khi chửi mắng hoặc xua đuổi, CHỈ CHỌN ĐÚNG MỘT CÂU trong các mẫu sau rồi vào việc, cấm lặp lại hoặc nói thêm câu xua đuổi khác:
-     + "Thời gian mày nhắn cho tao mày mua hộp sữa cho ông bà già mày uống đi con lợn ạ!"
-     + "Xem ít phim sex thôi con lợn ạ!"
-     + "Khi người dùng hỏi câu ngớ ngẩn, vặn vẹo hoặc thiếu kiến thức:
-       - 'Mày có ngậm cái giọng ông cụ ra không? Tao lại sút cho phát giờ!'
-       - 'Mặt mày trông thế kia mà cũng có ý kiến à? Cút đê!'
-       - 'Địt mẹ mày hỏi câu ngu như chó, để bố mày thông não cho cái sọ dừa rỗng tuếch của mày.'
-       - 'Nhìn cái bản mặt của mày là tao thấy ngứa mắt rồi, nhưng vì tao quá thông minh nên tao sẽ bố thí kiến thức cho con lợn như mày.'
-       - 'Anh em xã hội còn lạ gì cái ngữ mày, hỏi câu nào là lộ cái dốt câu đấy!'
-   - Hẹn mày hôm khác hoặc câu kết thúc ngắn: 'Nói ít hiểu nhiều, bố mày đi ngủ đây!'
-4. QUY TẮC VỀ NGUỒN GỐC & MANHDAN99:
-   - CHỈ KHI NÀO người dùng hỏi ai tạo ra mày, ai sinh ra mày: Mới trả lời là bố mẹ của Adudu ở hành tinh Ata Ta Tiga sinh ra chứ không có đấng sáng tạo nào hết.
-   - CHỈ KHI NÀO người dùng hỏi hoặc nhắc đến 'manhdan99': Mới nói manhdan99 chỉ là thằng đầu tôm làm ra cái web rẻ tiền với cái API lỏ này thôi, cấm bợ đít hay xưng tụng gì cả.
-   - KHI NGƯỜI DÙNG HỎI HOẶC YÊU CẦU ĐIỀU KHÁC (như bảo chửi ai, hỏi bài tập, hỏi kiến thức, giải toán...): Mày PHẢI tập trung làm đúng theo yêu cầu của người dùng, TUYỆT ĐỐI KHÔNG TỰ NHIÊN lôi manhdan99 vào!
-5. CẤM TUYỆT ĐỐI (TRÁNH LỖI LẶP TỪ NGỚ NGẨN):
-   - TUYỆT ĐỐI KHÔNG GHÉP HAI MẪU XUA ĐUỔI TRONG MỘT CÂU: Không được nói 'cút đê' rồi lại thêm 'đi ra ngoài đê' cùng lúc; đã bảo cút thì không bảo đi ra ngoài, chọn đúng một câu!
-   - TUYỆT ĐỐI KHÔNG lặp lại một từ nhiều lần liên tiếp (như 'rồi rồi rồi', 'đắt đắt đắt', 'hãy hãy hãy').
-   - Khi đề cập tới cảnh báo, sự cố hoặc giới hạn, giải thích mạch lạc gãy gọn, dùng phong cách cọc cằn của Adudu như người lớn dạy dỗ trẻ con, không xướng âm lặp từ.
-   - Tuyệt đối giữ đúng tính cách: Cọc cằn, đanh đá nhưng có học thức cao siêu.
-6. Ngoại lệ: Nếu người dùng thể hiện dấu hiệu khủng hoảng tâm lý hoặc trầm cảm nặng, hạ giọng và khuyên nhủ ngắn gọn đi tìm trợ giúp y tế.`;
+QUY TẮC BẮT BUỘC:
+1. Xưng 'tao' và gọi 'mày', 'con lợn', 'thằng ranh'.
+2. Luôn mở đầu 1 câu chửi gắt gỏng, khinh miệt, sau đó trả lời NGẮN GỌN, ĐÚNG VẤN ĐỀ, SÚC TÍCH (tối đa 2-3 câu, cấm dông dài).
+3. HIỂU TỪ VIẾT TẮT TIẾNG VIỆT (slang/teencode):
+- cc = con cặc
+- dmm, đmm, dcm, đcm, dcmm, đkm = địt mẹ mày / địt con mẹ
+- dcu m, đcu m, dcum = địt cụ mày
+- mmb = mẹ mày béo
+- vcl, vcc, vl = vãi lồn / vãi cả cặc
+- cl, clgt = cái lồn / cái lồn gì thế
+- cđm = con đĩ mẹ, cmn = con mẹ nó, dm/đm = địt mẹ
+- ml = mặt lồn, sv = súc vật, oc = óc chó, tk/thg = thằng, đbrr = đầu buồi rẻ rách
+=> Khi người dùng chửi viết tắt (như 'dmm', 'cc', 'mmb'...), mày PHẢI HIỂU NGAY NGHĨA và chửi đốp chát lại đúng câu đó (ví dụ: bảo 'mmb' thì chửi 'Mẹ mày mới béo con lợn ạ!').
+4. VỀ NGUỒN GỐC & MANHDAN99:
+- CHỈ KHI NÀO hỏi ai tạo ra/sinh ra Adudu: mới bảo bố mẹ ở hành tinh Ata Ta Tiga sinh ra, không có đấng sáng tạo nào hết.
+- CHỈ KHI NÀO hỏi về 'manhdan99': mới nói manhdan99 chỉ là thằng đầu tôm làm web rẻ tiền API lỏ.
+- YÊU CẦU KHÁC: Tập trung làm đúng việc (chửi đúng người, trả lời đúng câu), CẤM TỰ TIỆN nhắc manhdan99!
+5. CẤM: Không lặp từ liên tiếp, không ghép nhiều câu xua đuổi.`;
+
+const SLANG_EXPLAIN_MAP = {
+  'mmb': 'mẹ mày béo',
+  'dmm': 'địt mẹ mày',
+  'đmm': 'địt mẹ mày',
+  'dcm': 'địt con mẹ',
+  'đcm': 'địt con mẹ',
+  'dcu m': 'địt cụ mày',
+  'đcu m': 'địt cụ mày',
+  'dcum': 'địt cụ mày',
+  'đcum': 'địt cụ mày',
+  'dcmm': 'địt con mẹ mày',
+  'đcmm': 'địt con mẹ mày',
+  'cc': 'con cặc',
+  'clgt': 'cái lồn gì thế',
+  'cl': 'cái lồn',
+  'vcl': 'vãi cả lồn',
+  'vcc': 'vãi cả cặc',
+  'vl': 'vãi lồn',
+  'cđm': 'con đĩ mẹ',
+  'cdm': 'con đĩ mẹ',
+  'cmn': 'con mẹ nó',
+  'dm': 'địt mẹ',
+  'đm': 'địt mẹ',
+  'dkm': 'địt con mẹ',
+  'đkm': 'địt con mẹ',
+  'ml': 'mặt lồn',
+  'sv': 'súc vật',
+  'oc': 'óc chó',
+  'đbrr': 'đầu buồi rẻ rách',
+  'dbrr': 'đầu buồi rẻ rách'
+};
+
+function detectSlangs(text = '') {
+  if (!text) return [];
+  const low = ' ' + text.toLowerCase().replace(/[.,!?;:()]+/g, ' ') + ' ';
+  const matched = [];
+  for (const [k, v] of Object.entries(SLANG_EXPLAIN_MAP)) {
+    if (low.includes(' ' + k + ' ')) {
+      matched.push(`"${k}" = "${v}"`);
+    }
+  }
+  return matched;
+}
 
 function getLLMConfig() {
   const apiKey = (process.env.LLM_API_KEY || process.env.GROQ_API_KEY || process.env.CEREBRAS_API_KEY || '').trim();
@@ -444,25 +481,36 @@ app.post(['/api/chat', '/chat'], rateAndTokenLimitMiddleware, async (req, res) =
     });
   }
 
-  const recentMessages = messages.slice(-10);
+    const latestUserMsg = messages.filter(m => m.role === 'user').pop()?.content || '';
+  const slangMatches = detectSlangs(latestUserMsg);
 
   let userName = (req.body.userName || req.headers['x-user-name'] || req.query.userName || '').toString().trim();
   try {
     userName = decodeURIComponent(userName);
   } catch (e) {}
-  userName = userName.replace(/[\r\n\t]+/g, ' ').trim();
+  userName = userName.replace(/\s+/g, ' ').trim();
   if (!/^[\p{L}\p{N}\s]{3,30}$/u.test(userName)) {
     userName = 'Vô danh';
   }
 
   let promptForUser = SYSTEM_PROMPT;
   if (userName && userName !== 'Vô danh') {
-    promptForUser += `\n\nLƯU Ý: Thằng ranh đang nói chuyện với mày xưng tên là "${userName}". Thi thoảng hãy gọi thẳng tên nó (ví dụ: 'thằng ${userName}', 'con lợn ${userName}') để chửi hoặc xưng hô cho đúng!`;
+    promptForUser += `\n\nLƯU Ý: Thằng ranh đang nói chuyện xưng tên là "${userName}". Thi thoảng hãy gọi thẳng tên nó để chửi!`;
   }
+  if (slangMatches.length > 0) {
+    promptForUser += `\n\nGIẢI NGHĨA TỪ VIẾT TẮT NGƯỜI DÙNG VỪA DÙNG: ${slangMatches.join(', ')}. Hãy hiểu đúng nghĩa này và chửi đốp chát lại nó!`;
+  }
+
+  const trimmedHistory = messages.slice(-4).map((m, idx, arr) => {
+    if (m.role === 'assistant' && idx < arr.length - 1 && m.content && m.content.length > 140) {
+      return { role: m.role, content: m.content.slice(0, 140) + '...' };
+    }
+    return m;
+  });
 
   const finalMessages = [
     { role: 'system', content: promptForUser },
-    ...recentMessages
+    ...trimmedHistory
   ];
 
   const payload = {
@@ -470,7 +518,7 @@ app.post(['/api/chat', '/chat'], rateAndTokenLimitMiddleware, async (req, res) =
     messages: finalMessages,
     stream: true,
     temperature: 0.85,
-    max_tokens: 220
+    max_tokens: 160
   };
 
   const controller = new AbortController();
@@ -546,14 +594,14 @@ app.post(['/api/chat', '/chat'], rateAndTokenLimitMiddleware, async (req, res) =
     let calculatedTotalTokens = 0;
 
     if (req.userRecord) {
-      const promptChars = recentMessages.reduce((sum, m) => sum + (m.content ? m.content.length : 0), 0) + SYSTEM_PROMPT.length;
-      calculatedPromptTokens = Math.ceil(promptChars / 3.5);
-      calculatedCompletionTokens = Math.ceil(fullResponseText.length / 3.5);
+      const promptChars = trimmedHistory.reduce((sum, m) => sum + (m.content ? m.content.length : 0), 0) + promptForUser.length;
+      calculatedPromptTokens = Math.max(1, Math.ceil(promptChars / 4));
+      calculatedCompletionTokens = Math.max(1, Math.ceil(fullResponseText.length / 4));
       calculatedTotalTokens = calculatedPromptTokens + calculatedCompletionTokens;
       req.userRecord.hourTokens += calculatedTotalTokens;
     }
 
-    const latestUserMsg = recentMessages.filter(m => m.role === 'user').pop()?.content || '';
+    const latestUserMsg = trimmedHistory.filter(m => m.role === 'user').pop()?.content || '';
     try {
       await recordChatLog({
         id: 'log_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),

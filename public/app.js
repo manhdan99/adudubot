@@ -728,9 +728,11 @@ async function sendMessage(userText) {
 
   setStreamingState(true);
 
-  const recentMessages = currentConv.messages.slice(-4).map(m => ({
+  const recentMessages = currentConv.messages.slice(-4).map((m, idx, arr) => ({
     role: m.role,
-    content: m.content
+    content: (m.role === 'assistant' && idx < arr.length - 1 && m.content.length > 140)
+      ? m.content.slice(0, 140) + '...'
+      : m.content
   }));
 
   state.abortController = new AbortController();
