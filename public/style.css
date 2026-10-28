@@ -1,26 +1,18 @@
-/* ========================================================
-   ADUDU CHATBOT - MODERN MINIMALIST DESIGN
-   Phong cách giao diện lấy cảm hứng từ ChatGPT / Claude / Gemini
-   ======================================================== */
+
 
 :root {
-  /* Màu nhấn duy nhất: Xanh lá chanh & Màu tím tin nhắn người dùng */
+  
   --accent: #9dff2e;
   --accent-hover: #b4ff54;
   --user-bubble: #4b36b5;
   --user-bubble-hover: #583fd6;
 
-  /* Font chữ */
   --font-base: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   --font-logo: 'Bangers', cursive, sans-serif;
 
-  /* Chuyển động nhẹ */
   --transition-fast: 180ms ease;
 }
 
-/* ========================================================
-   THEME TỐI (MẶC ĐỊNH)
-   ======================================================== */
 [data-theme="dark"] {
   --bg-main: #17122b;
   --bg-sidebar: #100b20;
@@ -45,9 +37,6 @@
   --scrollbar-thumb-hover: rgba(255, 255, 255, 0.24);
 }
 
-/* ========================================================
-   THEME SÁNG (WHITE / IVORY)
-   ======================================================== */
 [data-theme="light"] {
   --bg-main: #f8f8fc;
   --bg-sidebar: #ededf4;
@@ -72,9 +61,6 @@
   --scrollbar-thumb-hover: rgba(0, 0, 0, 0.25);
 }
 
-/* ========================================================
-   RESET CĂN BẢN
-   ======================================================== */
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
@@ -95,7 +81,6 @@ html, body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Toàn trang chiếm 100% chiều cao */
 .app-container {
   display: flex;
   width: 100%;
@@ -104,9 +89,6 @@ html, body {
   overflow: hidden;
 }
 
-/* ========================================================
-   PHẦN A: SIDEBAR (260px, COLLAPSIBLE)
-   ======================================================== */
 .sidebar {
   width: 260px;
   height: 100%;
@@ -158,7 +140,6 @@ html, body {
   line-height: 1;
 }
 
-/* Nút tạo cuộc trò chuyện mới */
 .sidebar-action {
   padding: 12px 14px;
 }
@@ -186,7 +167,6 @@ html, body {
   border-color: rgba(255, 255, 255, 0.16);
 }
 
-/* Danh sách lịch sử chat */
 .history-container {
   flex: 1;
   overflow-y: auto;
@@ -273,7 +253,6 @@ html, body {
   background-color: rgba(255, 255, 255, 0.08);
 }
 
-/* Chân Sidebar */
 .sidebar-footer {
   padding: 10px 12px;
   border-top: 1px solid var(--border-color);
@@ -303,9 +282,6 @@ html, body {
   color: var(--text-main);
 }
 
-/* ========================================================
-   PHẦN B: KHU VỰC CHAT CHÍNH (MAIN AREA)
-   ======================================================== */
 .chat-main {
   flex: 1;
   height: 100%;
@@ -316,7 +292,6 @@ html, body {
   overflow: hidden;
 }
 
-/* Header mỏng */
 .main-header {
   height: 58px;
   padding: 0 20px;
@@ -352,7 +327,6 @@ html, body {
   gap: 10px;
 }
 
-/* Huy hiệu hạn mức người dùng (Quota Pill) */
 .quota-pill {
   display: inline-flex;
   align-items: center;
@@ -383,7 +357,6 @@ html, body {
   color: #ef5350;
 }
 
-/* Công tắc dạng pill trên Header */
 .toggle-pill {
   display: inline-flex;
   align-items: center;
@@ -425,9 +398,6 @@ html, body {
   color: var(--text-main);
 }
 
-/* ========================================================
-   VÙNG HIỂN THỊ TIN NHẮN (CĂN GIỮA 768px)
-   ======================================================== */
 .messages-viewport {
   flex: 1;
   overflow-y: auto;
@@ -444,9 +414,6 @@ html, body {
   flex-direction: column;
 }
 
-/* ========================================================
-   MÀN HÌNH CHÀO (WELCOME SCREEN)
-   ======================================================== */
 .welcome-screen {
   margin: auto 0;
   padding: 40px 0 20px;
@@ -490,7 +457,6 @@ html, body {
   margin-bottom: 36px;
 }
 
-/* Lưới 4 thẻ gợi ý */
 .suggestion-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -534,16 +500,12 @@ html, body {
   transform: translateX(2px);
 }
 
-/* ========================================================
-   DANH SÁCH TIN NHẮN (MESSAGE LIST)
-   ======================================================== */
 .message-list {
   display: flex;
   flex-direction: column;
   gap: 28px;
 }
 
-/* Hàng tin nhắn chung */
 .msg-row {
   display: flex;
   width: 100%;
@@ -555,7 +517,6 @@ html, body {
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* Tin nhắn người dùng: Căn phải, bong bóng tím */
 .msg-user {
   justify-content: flex-end;
 }
@@ -572,7 +533,6 @@ html, body {
   white-space: pre-wrap;
 }
 
-/* Tin nhắn của Adudu: Căn trái, KHÔNG bong bóng, chữ trải trên nền */
 .msg-bot {
   align-items: flex-start;
   gap: 14px;
@@ -607,7 +567,6 @@ html, body {
   white-space: pre-wrap;
 }
 
-/* Con trỏ nhấp nháy khi đang stream */
 .streaming-cursor::after {
   content: '▋';
   display: inline-block;
@@ -621,7 +580,6 @@ html, body {
   50% { opacity: 0; }
 }
 
-/* Hàng icon tác vụ nhỏ bên dưới Adudu message */
 .bot-action-row {
   display: flex;
   align-items: center;
@@ -653,7 +611,6 @@ html, body {
   background-color: rgba(255, 255, 255, 0.08);
 }
 
-/* Hộp báo lỗi */
 .bot-error-banner {
   background-color: rgba(239, 68, 68, 0.12);
   border: 1px solid rgba(239, 68, 68, 0.35);
@@ -691,7 +648,6 @@ html, body {
   background-color: rgba(239, 68, 68, 0.35);
 }
 
-/* Nút tròn nhỏ cuộn xuống */
 .btn-scroll-down {
   position: absolute;
   bottom: 16px;
@@ -716,9 +672,6 @@ html, body {
   transform: translateY(-2px);
 }
 
-/* ========================================================
-   Ô NHẬP DÍNH Ở ĐÁY (STICKY INPUT, CĂN GIỮA 768px)
-   ======================================================== */
 .input-section {
   padding: 0 20px 18px;
   background: linear-gradient(180deg, transparent 0%, var(--bg-main) 20%);
@@ -761,7 +714,7 @@ html, body {
   font-size: 1rem;
   line-height: 1.5;
   resize: none;
-  max-height: 160px; /* Khoảng 6 dòng */
+  max-height: 160px; 
   min-height: 24px;
   padding: 4px 0;
 }
@@ -775,7 +728,6 @@ html, body {
   color: var(--text-subtle);
 }
 
-/* Nút gửi tròn bên phải trong ô nhập */
 .btn-action-send {
   width: 36px;
   height: 36px;
@@ -816,9 +768,6 @@ html, body {
   margin-top: 8px;
 }
 
-/* ========================================================
-   PHẦN 4: POP-UP ADUDU HIỆN HÌNH + ĐỌC TO
-   ======================================================== */
 .popup-overlay {
   position: fixed;
   inset: 0;
@@ -861,7 +810,6 @@ html, body {
   transform: scale(1);
 }
 
-/* Avatar lớn ở giữa (khoảng 160px, viền xanh chanh 3px) */
 .popup-avatar-container {
   margin-bottom: 14px;
 }
@@ -886,7 +834,6 @@ html, body {
   display: block;
 }
 
-/* Avatar lắc nhẹ khi đang đọc */
 .popup-avatar-wrap.wobbling {
   animation: gentleWobble 0.35s infinite ease-in-out alternate;
 }
@@ -897,7 +844,6 @@ html, body {
   100% { transform: rotate(-4deg) translateY(0); }
 }
 
-/* Bong bóng thoại trắng */
 .popup-speech-bubble {
   position: relative;
   width: 100%;
@@ -911,7 +857,6 @@ html, body {
   flex-direction: column;
 }
 
-/* Mũi nhọn chỉ lên avatar */
 .speech-arrow-up {
   position: absolute;
   top: -12px;
@@ -943,7 +888,6 @@ html, body {
   text-align: center;
 }
 
-/* Đúng 2 nút nhỏ bên dưới: Đọc lại & Đóng */
 .popup-actions {
   display: flex;
   align-items: center;
@@ -972,9 +916,6 @@ html, body {
   border-color: rgba(255, 255, 255, 0.2);
 }
 
-/* ========================================================
-   MODAL HỘP THOẠI CÀI ĐẶT & XÁC NHẬN
-   ======================================================== */
 .modal-dialog-overlay {
   position: fixed;
   inset: 0;
@@ -1211,9 +1152,6 @@ html, body {
   background-color: #dc2626;
 }
 
-/* ========================================================
-   CÁC NÚT ICON NHỎ & TIỆN ÍCH
-   ======================================================== */
 .btn-icon {
   background: none;
   border: none;
@@ -1244,13 +1182,11 @@ html, body {
   display: none;
 }
 
-/* Focus rõ nét khi dùng bàn phím */
 :focus-visible {
   outline: 2px solid var(--accent) !important;
   outline-offset: 2px !important;
 }
 
-/* Tôn trọng prefers-reduced-motion */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.001s !important;
@@ -1261,7 +1197,6 @@ html, body {
   }
 }
 
-/* Custom scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
 }
@@ -1276,9 +1211,6 @@ html, body {
   background: var(--scrollbar-thumb-hover);
 }
 
-/* ========================================================
-   RESPONSIVE CHO THIẾT BỊ DI ĐỘNG (< 768px)
-   ======================================================== */
 @media (max-width: 768px) {
   .desktop-only {
     display: none !important;
@@ -1288,7 +1220,6 @@ html, body {
     display: flex !important;
   }
 
-  /* Sidebar thành Drawer trượt từ bên trái */
   .sidebar {
     position: fixed;
     top: 0;
@@ -1317,7 +1248,6 @@ html, body {
     pointer-events: auto;
   }
 
-  /* Header trên điện thoại */
   .main-header {
     padding: 0 14px;
   }
@@ -1328,14 +1258,13 @@ html, body {
   }
 
   .toggle-pill-text {
-    display: none; /* Chỉ hiện icon trên mobile để tiết kiệm diện tích */
+    display: none; 
   }
 
   .toggle-pill {
     padding: 6px 8px;
   }
 
-  /* Màn hình chào */
   .suggestion-grid {
     grid-template-columns: 1fr;
   }
@@ -1349,14 +1278,13 @@ html, body {
   }
 
   .bot-action-row {
-    opacity: 1; /* Luôn hiện icon trên cảm ứng mobile */
+    opacity: 1; 
   }
 
   .input-section {
     padding: 0 12px 12px;
   }
 
-  /* Pop-up Adudu trên mobile */
   .popup-avatar-wrap {
     width: 120px;
     height: 120px;

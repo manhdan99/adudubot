@@ -1,12 +1,5 @@
-/**
- * ADUDU CHATBOT - FRONTEND APPLICATION JAVASCRIPT
- * Tương thích ChatGPT / Claude / Gemini
- * Hỗ trợ đa hội thoại, SSE Streaming, Web Speech API, Theme Sáng/Tối, Pop-up
- */
 
-// ========================================================
-// HẰNG SỐ & KHỞI TẠO CẤU HÌNH
-// ========================================================
+
 const STORAGE_KEYS = {
   CONVERSATIONS: 'adudu_conversations_v2',
   ACTIVE_ID: 'adudu_active_conversation_id_v2',
@@ -20,15 +13,10 @@ const DEFAULT_SETTINGS = {
   speechRate: 1.05
 };
 
-// Tự động nhận diện URL backend:
-// Nếu người dùng mở trực tiếp file:// hoặc mở qua Live Server / port khác, tự trỏ về http://localhost:3000
 const API_BASE_URL = (window.location.protocol === 'file:' || (window.location.port && window.location.port !== '3000'))
   ? 'http://localhost:3000'
   : '';
 
-// ========================================================
-// TRẠNG THÁI ỨNG DỤNG (STATE)
-// ========================================================
 const state = {
   conversations: [],
   activeId: null,
@@ -41,11 +29,8 @@ const state = {
   userHasScrolledUp: false
 };
 
-// ========================================================
-// DOM ELEMENTS
-// ========================================================
 const DOM = {
-  // Sidebar & Layout
+  
   sidebar: document.getElementById('sidebar'),
   sidebarBackdrop: document.getElementById('sidebarBackdrop'),
   btnOpenMobileSidebar: document.getElementById('btnOpenMobileSidebar'),
@@ -60,14 +45,12 @@ const DOM = {
   themeIconLight: document.querySelector('.theme-icon-light'),
   btnOpenSettings: document.getElementById('btnOpenSettings'),
 
-  // Header
   currentChatTitle: document.getElementById('currentChatTitle'),
   headerQuotaPill: document.getElementById('headerQuotaPill'),
   headerQuotaText: document.getElementById('headerQuotaText'),
   headerTogglePopup: document.getElementById('headerTogglePopup'),
   headerToggleSpeech: document.getElementById('headerToggleSpeech'),
 
-  // Chat Area
   messagesViewport: document.getElementById('messagesViewport'),
   messagesColumn: document.getElementById('messagesColumn'),
   welcomeScreen: document.getElementById('welcomeScreen'),
@@ -75,14 +58,12 @@ const DOM = {
   btnScrollDown: document.getElementById('btnScrollDown'),
   suggestionCards: document.querySelectorAll('.suggestion-card'),
 
-  // Input
   chatForm: document.getElementById('chatForm'),
   messageInput: document.getElementById('messageInput'),
   btnSubmit: document.getElementById('btnSubmit'),
   sendIcon: document.getElementById('sendIcon'),
   stopIcon: document.getElementById('stopIcon'),
 
-  // Pop-up Adudu
   aduduModal: document.getElementById('aduduModal'),
   modalBackdrop: document.getElementById('modalBackdrop'),
   popupAvatarWrap: document.getElementById('popupAvatarWrap'),
@@ -92,7 +73,6 @@ const DOM = {
   btnPopupReplay: document.getElementById('btnPopupReplay'),
   btnPopupClose: document.getElementById('btnPopupClose'),
 
-  // Dialog Cài đặt
   settingsDialog: document.getElementById('settingsDialog'),
   settingsDialogBackdrop: document.getElementById('settingsDialogBackdrop'),
   btnCloseSettingsDialog: document.getElementById('btnCloseSettingsDialog'),
@@ -104,7 +84,6 @@ const DOM = {
   settingQuotaHint: document.getElementById('settingQuotaHint'),
   btnClearAllHistory: document.getElementById('btnClearAllHistory'),
 
-  // Modal Xác nhận
   confirmDialog: document.getElementById('confirmDialog'),
   confirmDialogBackdrop: document.getElementById('confirmDialogBackdrop'),
   confirmDialogTitle: document.getElementById('confirmDialogTitle'),
@@ -112,7 +91,6 @@ const DOM = {
   btnConfirmCancel: document.getElementById('btnConfirmCancel'),
   btnConfirmOk: document.getElementById('btnConfirmOk'),
 
-  // Modal Đổi tên
   renameDialog: document.getElementById('renameDialog'),
   renameDialogBackdrop: document.getElementById('renameDialogBackdrop'),
   renameInput: document.getElementById('renameInput'),
@@ -120,11 +98,8 @@ const DOM = {
   btnRenameOk: document.getElementById('btnRenameOk')
 };
 
-// ========================================================
-// QUẢN LÝ LƯU TRỮ (LOCALSTORAGE AN TOÀN)
-// ========================================================
 function loadSavedData() {
-  // 1. Tải cài đặt
+  
   try {
     const rawSettings = localStorage.getItem(STORAGE_KEYS.SETTINGS);
     if (rawSettings) {
@@ -134,13 +109,12 @@ function loadSavedData() {
     console.warn('Lỗi đọc settings:', e);
   }
 
-  // 2. Tải theme
   try {
     const rawTheme = localStorage.getItem(STORAGE_KEYS.THEME);
     if (rawTheme) {
       state.theme = rawTheme;
     } else {
-      // Mặc định dựa trên hệ điều hành
+      
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
       state.theme = prefersDark ? 'dark' : 'light';
     }
@@ -148,7 +122,6 @@ function loadSavedData() {
     state.theme = 'dark';
   }
 
-  // 3. Tải danh sách hội thoại
   try {
     const rawConversations = localStorage.getItem(STORAGE_KEYS.CONVERSATIONS);
     if (rawConversations) {
@@ -163,7 +136,6 @@ function loadSavedData() {
     state.conversations = [];
   }
 
-  // Nếu chưa có hội thoại nào, tạo mới 1 hội thoại
   if (!state.conversations || state.conversations.length === 0) {
     createNewConversation(true);
   } else if (!state.activeId || !state.conversations.some(c => c.id === state.activeId)) {
@@ -196,9 +168,6 @@ function saveTheme() {
   }
 }
 
-// ========================================================
-// TIỆN ÍCH XỬ LÝ CHUỖI & PHÂN NHÓM THỜI GIAN
-// ========================================================
 function stripMarkdown(text) {
   if (!text) return '';
   return text
@@ -216,7 +185,7 @@ function stripMarkdown(text) {
 
 function ensureLaughter(text) {
   let cleaned = text.trim();
-  // Kiểm tra cuối câu có Hahaha chưa
+  
   if (!/hahaha[!.]*$/i.test(cleaned)) {
     cleaned = cleaned + ' Hahaha!';
   }
@@ -229,9 +198,6 @@ function escapeHTML(str) {
   return p.innerHTML;
 }
 
-/**
- * Định danh duy nhất cho từng trình duyệt/tab người dùng để quản lý hạn mức riêng biệt
- */
 function getClientId() {
   let id = localStorage.getItem('adudu_client_id');
   if (!id) {
@@ -241,9 +207,6 @@ function getClientId() {
   return id;
 }
 
-/**
- * Lấy và cập nhật thông tin hạn ngạch Request & Token còn lại của người dùng
- */
 async function fetchAndDisplayQuota() {
   try {
     const clientId = getClientId();
@@ -277,9 +240,6 @@ async function fetchAndDisplayQuota() {
   }
 }
 
-/**
- * Phân nhóm danh sách hội thoại theo Hôm nay, Hôm qua, 7 ngày trước, Cũ hơn
- */
 function groupConversationsByDate(convs) {
   const now = new Date();
   const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
@@ -309,9 +269,6 @@ function groupConversationsByDate(convs) {
   return groups;
 }
 
-// ========================================================
-// QUẢN LÝ HỘI THOẠI (CONVERSATIONS)
-// ========================================================
 function getActiveConversation() {
   return state.conversations.find(c => c.id === state.activeId) || null;
 }
@@ -334,7 +291,6 @@ function createNewConversation(shouldSwitch = true) {
   renderSidebarHistory();
   renderChatMessages();
 
-  // Đóng sidebar trên mobile nếu đang mở
   closeMobileSidebar();
   DOM.messageInput.focus();
 }
@@ -376,9 +332,6 @@ function renameConversation(id, newTitle) {
   }
 }
 
-// ========================================================
-// RENDER GIAO DIỆN
-// ========================================================
 function applyTheme(theme) {
   state.theme = theme;
   document.documentElement.setAttribute('data-theme', theme);
@@ -435,14 +388,12 @@ function renderSidebarHistory() {
           </div>
         `;
 
-        // Click để chuyển cuộc trò chuyện
         itemEl.addEventListener('click', (e) => {
           if (!e.target.closest('.history-actions')) {
             switchConversation(c.id);
           }
         });
 
-        // Bấm phím Enter / Space khi focus
         itemEl.addEventListener('keydown', (e) => {
           if ((e.key === 'Enter' || e.key === ' ') && !e.target.closest('.history-actions')) {
             e.preventDefault();
@@ -450,14 +401,12 @@ function renderSidebarHistory() {
           }
         });
 
-        // Đổi tên
         const renameBtn = itemEl.querySelector('.btn-rename');
         renameBtn.addEventListener('click', (e) => {
           e.stopPropagation();
           showRenameDialog(c.id, c.title);
         });
 
-        // Xóa
         const deleteBtn = itemEl.querySelector('.btn-delete');
         deleteBtn.addEventListener('click', (e) => {
           e.stopPropagation();
@@ -526,7 +475,6 @@ function appendMessageElement(role, content, msgId, isStreaming = false) {
       </div>
     `;
 
-    // Gắn sự kiện các nút tác vụ
     const copyBtn = row.querySelector('.btn-copy-msg');
     copyBtn.addEventListener('click', () => {
       const textToCopy = row.querySelector('.bot-text-body')?.textContent || '';
@@ -562,9 +510,6 @@ function scrollToBottom(smooth = true) {
   });
 }
 
-// ========================================================
-// POP-UP ADUDU HIỆN HÌNH & WEB SPEECH API
-// ========================================================
 function openPopup() {
   DOM.aduduModal.classList.add('active');
   DOM.aduduModal.setAttribute('aria-hidden', 'false');
@@ -592,10 +537,6 @@ function getVietnameseVoice() {
 
 let currentAudioPlayer = null;
 
-/**
- * Phát giọng nói Tiếng Việt hoạt hình lơ lớ đặc trưng của Adudu
- * Sử dụng Server TTS MP3 + Web Audio Pitch Shift, hoạt động trên MỌI máy tính/điện thoại không cần cài đặt gì
- */
 function speakText(text) {
   stopSpeaking();
 
@@ -605,18 +546,14 @@ function speakText(text) {
   if (!cleanText) return;
   state.lastSpokenText = cleanText;
 
-  // Sử dụng Cloud TTS từ server để MỌI MÁY ĐỀU NGHE ĐƯỢC GIỌNG TIẾNG VIỆT HOẠT HÌNH LƠ LỚ ĐẶC TRƯNG!
   const audioUrl = `${API_BASE_URL}/api/tts?text=${encodeURIComponent(cleanText)}`;
   const audio = new Audio(audioUrl);
   currentAudioPlayer = audio;
 
-  // Tinh chỉnh tạo giọng hoạt hình Adudu the thé, tưng tửng, lơ lớ:
-  // preservesPitch = false giúp khi tăng tốc độ thì cao độ pitch tự động tăng vọt thành giọng hoạt hình!
   audio.preservesPitch = false;
   audio.mozPreservesPitch = false;
   audio.webkitPreservesPitch = false;
-  
-  // Tốc độ điều chỉnh theo cài đặt (mặc định ~1.22x tạo giọng phản diện lí lắc cực hay)
+
   const baseRate = state.settings.speechRate ? (state.settings.speechRate * 1.15) : 1.22;
   audio.playbackRate = Math.min(Math.max(baseRate, 1.0), 1.5);
 
@@ -631,7 +568,7 @@ function speakText(text) {
   audio.onerror = () => {
     DOM.popupAvatarWrap.classList.remove('wobbling');
     currentAudioPlayer = null;
-    // Dự phòng Web Speech API nếu mạng offline
+    
     speakTextFallback(cleanText);
   };
 
@@ -671,21 +608,16 @@ function stopSpeaking() {
   DOM.popupAvatarWrap.classList.remove('wobbling');
 }
 
-// ========================================================
-// GỌI API STREAMING (SSE /api/chat)
-// ========================================================
 async function sendMessage(userText) {
   if (!userText || state.isStreaming) return;
 
   const currentConv = getActiveConversation();
   if (!currentConv) return;
 
-  // 1. Thêm tin nhắn người dùng vào danh sách
   const userMsgId = 'msg_u_' + Date.now();
   const userMsg = { id: userMsgId, role: 'user', content: userText, timestamp: Date.now() };
   currentConv.messages.push(userMsg);
 
-  // Đặt tiêu đề từ câu hỏi đầu tiên nếu đang là tiêu đề mặc định
   if (currentConv.messages.filter(m => m.role === 'user').length === 1 && currentConv.title === 'Cuộc trò chuyện mới') {
     currentConv.title = userText.trim().slice(0, 36) + (userText.length > 36 ? '...' : '');
     DOM.currentChatTitle.textContent = currentConv.title;
@@ -695,26 +627,21 @@ async function sendMessage(userText) {
   saveConversations();
   renderSidebarHistory();
 
-  // Ẩn welcome screen và render tin nhắn người dùng
   DOM.welcomeScreen.classList.add('hidden');
   appendMessageElement('user', userText, userMsgId, false);
   scrollToBottom();
 
-  // 2. Mở Pop-up Adudu nếu đang bật tính năng hiện hình
   if (state.settings.showPopup) {
     openPopup();
   }
 
-  // 3. Chuẩn bị hàng tin nhắn cho bot trong khung chat
   const botMsgId = 'msg_b_' + Date.now();
   const botRow = appendMessageElement('assistant', '', botMsgId, true);
   const botTextEl = botRow.querySelector('.bot-text-body');
   const botActionRow = botRow.querySelector('.bot-action-row');
 
-  // Đổi trạng thái nút Gửi thành nút Dừng
   setStreamingState(true);
 
-  // 4. Tối ưu token tối đa: Chỉ gửi 4 tin nhắn gần nhất làm ngữ cảnh
   const recentMessages = currentConv.messages.slice(-4).map(m => ({
     role: m.role,
     content: m.content
@@ -777,24 +704,21 @@ async function sendMessage(userText) {
               scrollToBottom();
             }
           } catch (e) {
-            // Bỏ qua lỗi chunk
+            
           }
         }
       }
     }
 
-    // Kết thúc streaming thành công
     botTextEl.classList.remove('streaming-cursor');
     botActionRow.classList.remove('hidden');
 
-    // Đảm bảo câu trả lời có tiếng cười Hahaha!
     fullAssistantText = ensureLaughter(fullAssistantText);
     botTextEl.textContent = fullAssistantText;
     if (state.settings.showPopup) {
       DOM.popupSpeechText.textContent = fullAssistantText;
     }
 
-    // Lưu vào lịch sử hội thoại
     currentConv.messages.push({
       id: botMsgId,
       role: 'assistant',
@@ -805,7 +729,6 @@ async function sendMessage(userText) {
     saveConversations();
     renderSidebarHistory();
 
-    // Đọc to nếu cài đặt bật
     if (state.settings.enableSpeech) {
       speakText(fullAssistantText);
     }
@@ -904,10 +827,10 @@ function regenerateLastMessage() {
 
   const lastMsg = currentConv.messages[currentConv.messages.length - 1];
   if (lastMsg.role === 'assistant') {
-    currentConv.messages.pop(); // Xóa tin bot gần nhất
+    currentConv.messages.pop(); 
     const lastUserMsg = currentConv.messages[currentConv.messages.length - 1];
     if (lastUserMsg && lastUserMsg.role === 'user') {
-      currentConv.messages.pop(); // Xóa tin user tương ứng
+      currentConv.messages.pop(); 
       saveConversations();
       renderChatMessages();
       sendMessage(lastUserMsg.content);
@@ -915,9 +838,6 @@ function regenerateLastMessage() {
   }
 }
 
-// ========================================================
-// HỘP THOẠI XÁC NHẬN & ĐỔI TÊN
-// ========================================================
 let confirmCallback = null;
 
 function showConfirmDialog(title, message, onOk) {
@@ -948,9 +868,6 @@ function closeRenameDialog() {
   renameTargetId = null;
 }
 
-// ========================================================
-// SỰ KIỆN GIAO DIỆN & TƯƠNG TÁC NGƯỜI DÙNG
-// ========================================================
 function checkInputState() {
   const text = DOM.messageInput.value.trim();
   DOM.btnSubmit.disabled = !text && !state.isStreaming;
@@ -972,16 +889,12 @@ function closeMobileSidebar() {
   DOM.sidebarBackdrop.classList.remove('active');
 }
 
-// ========================================================
-// KHỞI ĐỘNG VÀ ĐĂNG KÝ LISTENERS
-// ========================================================
 document.addEventListener('DOMContentLoaded', () => {
   loadSavedData();
   applyTheme(state.theme);
   renderSidebarHistory();
   renderChatMessages();
 
-  // Đồng bộ toggle trạng thái lên Header và Cài đặt
   DOM.headerTogglePopup.checked = state.settings.showPopup;
   DOM.settingTogglePopup.checked = state.settings.showPopup;
 
@@ -991,7 +904,6 @@ document.addEventListener('DOMContentLoaded', () => {
   DOM.speechRateRange.value = state.settings.speechRate || 1.05;
   DOM.speechRateLabel.textContent = `${(state.settings.speechRate || 1.05).toFixed(2)}x`;
 
-  // Tải thông tin model và hạn mức từ server
   fetch(`${API_BASE_URL}/api/info`)
     .then(r => r.json())
     .then(data => {
@@ -1001,11 +913,9 @@ document.addEventListener('DOMContentLoaded', () => {
       DOM.currentModelBadge.textContent = 'Mặc định (Groq / Cerebras)';
     });
 
-  // Tải thông tin hạn ngạch người dùng
   fetchAndDisplayQuota();
   setInterval(fetchAndDisplayQuota, 30000);
 
-  // 1. Nhập và gửi tin nhắn
   DOM.chatForm.addEventListener('submit', (e) => {
     e.preventDefault();
     if (state.isStreaming) {
@@ -1029,7 +939,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // 2. Thẻ gợi ý màn hình chào
   DOM.suggestionCards.forEach(card => {
     card.addEventListener('click', () => {
       const prompt = card.getAttribute('data-prompt');
@@ -1039,7 +948,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // 3. Cuộn xuống và phát hiện cuộn
   DOM.messagesViewport.addEventListener('scroll', () => {
     const distFromBottom = DOM.messagesViewport.scrollHeight - DOM.messagesViewport.scrollTop - DOM.messagesViewport.clientHeight;
     state.userHasScrolledUp = distFromBottom > 120;
@@ -1056,7 +964,6 @@ document.addEventListener('DOMContentLoaded', () => {
     scrollToBottom();
   });
 
-  // 4. Sidebar mở / thu gọn
   DOM.btnOpenMobileSidebar.addEventListener('click', openMobileSidebar);
   DOM.btnCloseSidebar.addEventListener('click', closeMobileSidebar);
   DOM.sidebarBackdrop.addEventListener('click', closeMobileSidebar);
@@ -1075,13 +982,11 @@ document.addEventListener('DOMContentLoaded', () => {
     createNewConversation(true);
   });
 
-  // 5. Đổi theme
   DOM.btnToggleTheme.addEventListener('click', () => {
     const nextTheme = state.theme === 'dark' ? 'light' : 'dark';
     applyTheme(nextTheme);
   });
 
-  // 6. Toggles trên Header
   DOM.headerTogglePopup.addEventListener('change', () => {
     state.settings.showPopup = DOM.headerTogglePopup.checked;
     DOM.settingTogglePopup.checked = state.settings.showPopup;
@@ -1097,7 +1002,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // 7. Pop-up Adudu
   DOM.btnPopupClose.addEventListener('click', closePopup);
   DOM.modalBackdrop.addEventListener('click', closePopup);
   DOM.btnPopupReplay.addEventListener('click', () => {
@@ -1106,7 +1010,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // 8. Hộp thoại Cài đặt
   DOM.btnOpenSettings.addEventListener('click', () => {
     DOM.settingsDialog.classList.add('active');
   });
@@ -1154,7 +1057,6 @@ document.addEventListener('DOMContentLoaded', () => {
     );
   });
 
-  // 9. Modal Xác nhận
   DOM.btnConfirmCancel.addEventListener('click', closeConfirmDialog);
   DOM.confirmDialogBackdrop.addEventListener('click', closeConfirmDialog);
   DOM.btnConfirmOk.addEventListener('click', () => {
@@ -1162,7 +1064,6 @@ document.addEventListener('DOMContentLoaded', () => {
     closeConfirmDialog();
   });
 
-  // 10. Modal Đổi tên
   DOM.btnRenameCancel.addEventListener('click', closeRenameDialog);
   DOM.renameDialogBackdrop.addEventListener('click', closeRenameDialog);
   DOM.btnRenameOk.addEventListener('click', () => {
@@ -1178,7 +1079,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // 11. Phím tắt Esc
   window.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
       if (DOM.aduduModal.classList.contains('active')) {
@@ -1193,7 +1093,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Đảm bảo voices Web Speech nạp sẵn
   if ('speechSynthesis' in window) {
     window.speechSynthesis.onvoiceschanged = () => {
       getVietnameseVoice();

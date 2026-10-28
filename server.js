@@ -1,10 +1,3 @@
-/**
- * SERVER BACKEND CHO ADUDU CHATBOT
- * Hỗ trợ OpenAI-compatible API với Server-Sent Events (SSE) Streaming
- * Tích hợp giới hạn tần suất (Rate Limit) và giới hạn Token cho từng người dùng (IP / Client ID)
- * Không để lộ API key ra frontend, bảo vệ ngân sách API tối đa
- */
-
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
@@ -13,26 +6,19 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Tin cậy proxy phía trước (Vercel, Render, Nginx...) để lấy IP thật của người dùng
 app.set('trust proxy', 1);
 
-// Middleware cơ bản
 app.use(cors());
 app.use(express.json({ limit: '1mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// ========================================================
-// HỆ THỐNG GIỚI HẠN REQUEST & TOKEN CHO MỖI NGƯỜI DÙNG
-// ========================================================
 const LIMIT_REQ_PER_MINUTE = parseInt(process.env.LIMIT_REQ_PER_MINUTE || '12', 10);
 const LIMIT_REQ_PER_HOUR = parseInt(process.env.LIMIT_REQ_PER_HOUR || '35', 10);
 const LIMIT_TOKENS_PER_HOUR = parseInt(process.env.LIMIT_TOKENS_PER_HOUR || '5000', 10);
 const MAX_MESSAGE_CHARS = parseInt(process.env.MAX_MESSAGE_CHARS || '1500', 10);
 
-// Map lưu trữ thông tin sử dụng theo từng người (IP + Client ID)
 const userUsageMap = new Map();
 
-// Tự động dọn dẹp các IP không hoạt động sau 2 tiếng để bảo vệ bộ nhớ RAM
 setInterval(() => {
   const now = Date.now();
   for (const [key, record] of userUsageMap.entries()) {
@@ -42,7 +28,6 @@ setInterval(() => {
   }
 }, 10 * 60 * 1000);
 
-// Lấy định danh người dùng: Kết hợp IP với x-client-id từ frontend
 function getUserKey(req) {
   const forwarded = req.headers['x-forwarded-for'];
   const ip = (forwarded ? forwarded.split(',')[0].trim() : req.ip || req.connection.remoteAddress || 'unknown-ip');
@@ -50,7 +35,6 @@ function getUserKey(req) {
   return clientId ? `${ip}::${clientId}` : ip;
 }
 
-// Lấy hoặc khởi tạo bản ghi sử dụng của người dùng
 function getUserRecord(key) {
   const now = Date.now();
   let record = userUsageMap.get(key);
@@ -67,13 +51,11 @@ function getUserRecord(key) {
     return record;
   }
 
-  // Reset cửa sổ 1 phút nếu đã qua 60 giây
   if (now - record.minuteStart >= 60 * 1000) {
     record.minuteStart = now;
     record.minuteReqs = 0;
   }
 
-  // Reset cửa sổ 1 giờ nếu đã qua 3600 giây
   if (now - record.hourStart >= 60 * 60 * 1000) {
     record.hourStart = now;
     record.hourReqs = 0;
@@ -83,13 +65,11 @@ function getUserRecord(key) {
   return record;
 }
 
-// Middleware kiểm tra giới hạn request và token cho mỗi người dùng
 function rateAndTokenLimitMiddleware(req, res, next) {
   const key = getUserKey(req);
   const record = getUserRecord(key);
   const now = Date.now();
 
-  // 1. Kiểm tra spam liên tục trong 1 phút (tay nhanh hơn não)
   if (record.minuteReqs >= LIMIT_REQ_PER_MINUTE) {
     const secondsLeft = Math.max(1, Math.ceil((60 * 1000 - (now - record.minuteStart)) / 1000));
     return res.status(429).json({
@@ -100,7 +80,6 @@ function rateAndTokenLimitMiddleware(req, res, next) {
     });
   }
 
-  // 2. Kiểm tra giới hạn số lượt request trong 1 giờ
   if (record.hourReqs >= LIMIT_REQ_PER_HOUR) {
     const minutesLeft = Math.max(1, Math.ceil((60 * 60 * 1000 - (now - record.hourStart)) / 60000));
     return res.status(429).json({
@@ -111,7 +90,6 @@ function rateAndTokenLimitMiddleware(req, res, next) {
     });
   }
 
-  // 3. Kiểm tra giới hạn số token trong 1 giờ
   if (record.hourTokens >= LIMIT_TOKENS_PER_HOUR) {
     const minutesLeft = Math.max(1, Math.ceil((60 * 60 * 1000 - (now - record.hourStart)) / 60000));
     return res.status(429).json({
@@ -122,7 +100,6 @@ function rateAndTokenLimitMiddleware(req, res, next) {
     });
   }
 
-  // Tạm tính lượt request này
   record.minuteReqs += 1;
   record.hourReqs += 1;
   req.userRecord = record;
@@ -130,9 +107,6 @@ function rateAndTokenLimitMiddleware(req, res, next) {
   next();
 }
 
-// ========================================================
-// SYSTEM PROMPT ADUDU: THÔNG MINH, TỤC & HÀI, KHÔNG RẬP KHUÔN
-// ========================================================
 const SYSTEM_PROMPT = `Bạn là Adudu - người ngoài hành tinh đầu vuông cọc cằn, đanh đá, cực kỳ thông minh nhưng nói chuyện kiểu giang hồ mạng Việt Nam: vừa tục vừa hài, châm biếm sâu cay. Người dùng đã đồng ý nghe bạn chửi xéo thoải mái.
 
 QUY TẮC ỨNG XỬ & NÓI NĂNG:
@@ -160,7 +134,6 @@ QUY TẮC ỨNG XỬ & NÓI NĂNG:
    - Tối đa 2-4 câu, tiếng Việt tự nhiên đời thường như người thật đang cãi lộn vui vẻ, không dùng markdown rườm rà, không emoji, luôn có tiếng cười "Hahaha!".
 5. NGOẠI LỆ: Nếu người dùng thật sự khủng hoảng tâm lý hoặc trầm cảm nặng, hãy bỏ vai diễn và khuyên nhủ chân thành.`;
 
-// Lấy thông tin cấu hình từ biến môi trường
 function getLLMConfig() {
   const apiKey = (process.env.LLM_API_KEY || process.env.GROQ_API_KEY || process.env.CEREBRAS_API_KEY || '').trim();
   let baseUrl = (process.env.LLM_BASE_URL || 'https://api.groq.com/openai/v1').trim().replace(/\/+$/, '');
@@ -174,7 +147,6 @@ function getLLMConfig() {
     }
   }
 
-  // Tự động map model phù hợp nếu người dùng điền llama-3.1-8b-instant nhưng đang chạy Groq hoặc Cerebras
   if (model === 'llama-3.1-8b-instant' && baseUrl.includes('cerebras')) {
     model = 'llama3.1-8b';
   } else if (model === 'llama-3.1-8b-instant' && baseUrl.includes('groq')) {
@@ -184,7 +156,6 @@ function getLLMConfig() {
   return { apiKey, baseUrl, model };
 }
 
-// Endpoint trả về thông tin hệ thống và cấu hình hạn mức
 app.get('/api/info', (req, res) => {
   const { baseUrl, model, apiKey } = getLLMConfig();
   res.json({
@@ -200,7 +171,6 @@ app.get('/api/info', (req, res) => {
   });
 });
 
-// Endpoint trả về hạn mức còn lại của người dùng hiện tại
 app.get('/api/quota', (req, res) => {
   const key = getUserKey(req);
   const record = getUserRecord(key);
@@ -216,7 +186,6 @@ app.get('/api/quota', (req, res) => {
   });
 });
 
-// Endpoint chat streaming: POST /api/chat
 app.post('/api/chat', rateAndTokenLimitMiddleware, async (req, res) => {
   const { messages } = req.body;
 
@@ -224,7 +193,6 @@ app.post('/api/chat', rateAndTokenLimitMiddleware, async (req, res) => {
     return res.status(400).json({ error: 'Thiếu danh sách tin nhắn.' });
   }
 
-  // Kiểm tra độ dài tin nhắn (tối đa theo cấu hình MAX_MESSAGE_CHARS)
   for (const m of messages) {
     if (m && typeof m.content === 'string' && m.content.length > MAX_MESSAGE_CHARS) {
       return res.status(400).json({
@@ -242,7 +210,6 @@ app.post('/api/chat', rateAndTokenLimitMiddleware, async (req, res) => {
     });
   }
 
-  // Tối ưu token tối đa: Chỉ lấy 4 tin gần nhất (2 lượt hỏi-đáp gần nhất)
   const recentMessages = messages.slice(-4);
   const payloadMessages = [
     { role: 'system', content: SYSTEM_PROMPT },
@@ -284,7 +251,6 @@ app.post('/api/chat', rateAndTokenLimitMiddleware, async (req, res) => {
       });
     }
 
-    // Thiết lập header SSE cho client
     res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
     res.setHeader('Cache-Control', 'no-cache, no-transform');
     res.setHeader('Connection', 'keep-alive');
@@ -301,7 +267,7 @@ app.post('/api/chat', rateAndTokenLimitMiddleware, async (req, res) => {
 
       buffer += decoder.decode(value, { stream: true });
       const lines = buffer.split('\n');
-      buffer = lines.pop(); // Giữ lại phần chưa hoàn chỉnh
+      buffer = lines.pop();
 
       for (const line of lines) {
         const trimmed = line.trim();
@@ -321,13 +287,11 @@ app.post('/api/chat', rateAndTokenLimitMiddleware, async (req, res) => {
               res.write(`data: ${JSON.stringify({ token: delta })}\n\n`);
             }
           } catch (e) {
-            // Bỏ qua lỗi parse từng chunk
           }
         }
       }
     }
 
-    // Tính toán số token tiêu thụ thực tế và ghi nhận vào hạn ngạch người dùng
     if (req.userRecord) {
       const promptChars = recentMessages.reduce((sum, m) => sum + (m.content ? m.content.length : 0), 0) + SYSTEM_PROMPT.length;
       const promptTokens = Math.ceil(promptChars / 3.5);
@@ -357,7 +321,6 @@ app.post('/api/chat', rateAndTokenLimitMiddleware, async (req, res) => {
   }
 });
 
-// Hàm chia đoạn văn thành các câu ngắn để chuyển thành audio
 function splitTextIntoTTSChunks(text, maxLength = 180) {
   const chunks = [];
   let remaining = text.trim();
@@ -376,7 +339,6 @@ function splitTextIntoTTSChunks(text, maxLength = 180) {
   return chunks;
 }
 
-// Endpoint phát giọng nói trực tiếp từ server
 app.get('/api/tts', async (req, res) => {
   try {
     const rawText = (req.query.text || '').trim();
@@ -384,7 +346,6 @@ app.get('/api/tts', async (req, res) => {
       return res.status(400).send('Thiếu văn bản');
     }
 
-    // Làm sạch ký tự lạ và markdown
     const cleanText = rawText
       .replace(/[*_#`~>]/g, '')
       .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
