@@ -518,16 +518,16 @@ function renderChatMessages() {
   DOM.welcomeScreen.classList.add('hidden');
 
   currentConv.messages.forEach(msg => {
-    appendMessageElement(msg.role, msg.content, msg.id, false, Boolean(msg.isAdminDirect));
+    appendMessageElement(msg.role, msg.content, msg.id, false);
   });
 
   scrollToBottom(false);
 }
 
-function appendMessageElement(role, content, msgId, isStreaming = false, isAdminDirect = false) {
+function appendMessageElement(role, content, msgId, isStreaming = false) {
   const isUser = role === 'user';
   const row = document.createElement('div');
-  row.className = `msg-row ${isUser ? 'msg-user' : 'msg-bot'}${isAdminDirect ? ' msg-admin-direct' : ''}`;
+  row.className = `msg-row ${isUser ? 'msg-user' : 'msg-bot'}`;
   if (msgId) row.id = `msg_${msgId}`;
 
   if (isUser) {
@@ -540,7 +540,6 @@ function appendMessageElement(role, content, msgId, isStreaming = false, isAdmin
         <img class="bot-avatar-img" src="assets/adudu.png" alt="Adudu" onerror="this.src='assets/adudu-default.svg'">
       </div>
       <div class="bot-content-col">
-        ${isAdminDirect ? '<div class="direct-admin-badge">👑 Quản trị viên trực tiếp</div>' : ''}
         <div class="bot-text-body ${isStreaming ? 'streaming-cursor' : ''}">${escapeHTML(content)}</div>
         <div class="bot-action-row ${isStreaming ? 'hidden' : ''}">
           <button class="btn-msg-tool btn-copy-msg" title="Sao chép" aria-label="Sao chép câu trả lời">
@@ -1280,7 +1279,7 @@ function receiveAdminDirectMessage(msg) {
   if (DOM.welcomeScreen) DOM.welcomeScreen.classList.add('hidden');
   if (DOM.chatMessageList) DOM.chatMessageList.classList.remove('hidden');
 
-  appendMessageElement('assistant', text, msgObj.id, false, true);
+  appendMessageElement('assistant', text, msgObj.id, false);
 
   if (state.settings.showPopup) {
     openPopup();
