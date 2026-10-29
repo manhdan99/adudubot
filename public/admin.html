@@ -831,6 +831,165 @@
       max-width: 380px;
       line-height: 1.5;
     }
+
+    .remember-row {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      margin: -4px 0 16px;
+      user-select: none;
+    }
+
+    .remember-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--text-muted);
+      cursor: pointer;
+    }
+
+    .remember-label input[type="checkbox"] {
+      accent-color: var(--accent-gold);
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+    }
+
+    .badge-online {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.35);
+      color: #34d399;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+    }
+
+    .badge-offline {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 7px;
+      border-radius: 999px;
+      background: rgba(100, 116, 139, 0.15);
+      border: 1px solid rgba(100, 116, 139, 0.25);
+      color: #94a3b8;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .pulse-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #10b981;
+      box-shadow: 0 0 8px #10b981;
+      animation: pulseAnim 1.6s infinite ease-in-out;
+    }
+
+    @keyframes pulseAnim {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
+    }
+
+    .chat-target-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-direct-chat {
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      border: 1px solid rgba(59, 130, 246, 0.35);
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(139, 92, 246, 0.25) 100%);
+      color: #93c5fd;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+
+    .btn-direct-chat:hover {
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.35) 0%, rgba(139, 92, 246, 0.4) 100%);
+      color: #fff;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 14px rgba(59, 130, 246, 0.25);
+    }
+
+    .admin-reply-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 18px;
+      background: rgba(14, 20, 36, 0.95);
+      border-top: 1px solid var(--border);
+      backdrop-filter: blur(8px);
+    }
+
+    .admin-reply-input {
+      flex: 1;
+      padding: 11px 16px;
+      background: #141d33;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 10px;
+      color: #fff;
+      font-size: 14px;
+      outline: none;
+      transition: all 0.2s;
+    }
+
+    .admin-reply-input:focus {
+      border-color: var(--accent-blue);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+      background: #17223b;
+    }
+
+    .btn-admin-send {
+      padding: 11px 18px;
+      border: none;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    }
+
+    .btn-admin-send:hover {
+      filter: brightness(1.1);
+      transform: translateY(-1px);
+    }
+
+    .btn-admin-send:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .msg-group-direct .bubble-direct-admin {
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.18) 0%, rgba(139, 92, 246, 0.22) 100%);
+      border: 1px solid rgba(139, 92, 246, 0.35);
+      box-shadow: 0 4px 18px rgba(99, 102, 241, 0.12);
+      color: #f1f5f9;
+    }
+
+    .sender-direct-admin {
+      color: #c084fc;
+      font-weight: 700;
+    }
   </style>
 </head>
 <body>
@@ -848,6 +1007,13 @@
       
       <input type="password" id="adminPass" class="form-input" placeholder="Nhập mật khẩu..." autofocus>
       
+      <div class="remember-row">
+        <label class="remember-label">
+          <input type="checkbox" id="rememberPass" checked>
+          <span>Ghi nhớ mật khẩu trên máy này</span>
+        </label>
+      </div>
+
       <div class="modal-actions">
         <button id="btnCancelModal" class="btn-cancel">Đóng</button>
         <button id="btnLogin" class="btn-submit">Mở khóa</button>
@@ -934,8 +1100,8 @@
 
           <div class="filter-pills">
             <button class="filter-btn active" data-filter="all">Tất cả</button>
-            <button class="filter-btn" data-filter="active">Đang hoạt động</button>
-            <button class="filter-btn" data-filter="blocked">Đã chặn</button>
+            <button class="filter-btn" data-filter="online">Đang online 🟢</button>
+            <button class="filter-btn" data-filter="blocked">Đã chặn 🚫</button>
           </div>
 
           <div class="user-list" id="userListContainer">
@@ -954,7 +1120,8 @@
               </div>
               <div class="chat-target-details" id="selectedUserDetails">Thiết bị • Lần cuối</div>
             </div>
-            <div>
+            <div class="chat-target-actions">
+              <button id="btnDirectChatFocus" class="btn-direct-chat">💬 Chat trực tiếp</button>
               <button id="btnToggleBlock" class="btn-block-action btn-block-red">🚫 Chặn thiết bị này</button>
             </div>
           </div>
@@ -966,6 +1133,13 @@
                 <div class="empty-title">Chưa chọn người dùng</div>
                 <div class="empty-desc">Hãy bấm vào một người dùng ở danh sách bên trái để xem chi tiết lịch sử tin nhắn và lượng token tiêu tốn!</div>
               </div>
+            </div>
+
+            <div id="adminReplyBar" class="admin-reply-bar hidden">
+              <input type="text" id="adminReplyInput" class="admin-reply-input" placeholder="Nhập tin nhắn gửi trực tiếp tới người dùng này..." maxlength="500">
+              <button id="btnAdminSend" class="btn-admin-send">
+                <span>Gửi trực tiếp</span> 🚀
+              </button>
             </div>
           </div>
         </div>
@@ -979,7 +1153,7 @@
     const CACHE_LOGS_KEY = 'adudu_admin_logs_cache';
     const CACHE_STATS_KEY = 'adudu_admin_stats_cache';
 
-    let currentAdminKey = sessionStorage.getItem(AUTH_KEY) || '';
+    let currentAdminKey = localStorage.getItem(AUTH_KEY) || sessionStorage.getItem(AUTH_KEY) || '';
     let allUsers = [];
     let selectedUserKey = null;
     let currentFilter = 'all';
@@ -990,6 +1164,7 @@
       authModal: document.getElementById('authModal'),
       btnCancelModal: document.getElementById('btnCancelModal'),
       adminPass: document.getElementById('adminPass'),
+      rememberPass: document.getElementById('rememberPass'),
       btnLogin: document.getElementById('btnLogin'),
       loginErr: document.getElementById('loginErr'),
       adminDashboard: document.getElementById('adminDashboard'),
@@ -1007,9 +1182,13 @@
       chatTargetHeader: document.getElementById('chatTargetHeader'),
       selectedUserIp: document.getElementById('selectedUserIp'),
       selectedUserDetails: document.getElementById('selectedUserDetails'),
+      btnDirectChatFocus: document.getElementById('btnDirectChatFocus'),
       btnToggleBlock: document.getElementById('btnToggleBlock'),
       messagesContainer: document.getElementById('messagesContainer'),
-      emptyChatPlaceholder: document.getElementById('emptyChatPlaceholder')
+      emptyChatPlaceholder: document.getElementById('emptyChatPlaceholder'),
+      adminReplyBar: document.getElementById('adminReplyBar'),
+      adminReplyInput: document.getElementById('adminReplyInput'),
+      btnAdminSend: document.getElementById('btnAdminSend')
     };
 
     function getCachedUsers() {
@@ -1083,6 +1262,10 @@
     }
 
     function openModal() {
+      if (currentAdminKey) {
+        showDashboard();
+        return;
+      }
       el.authModal.classList.remove('hidden');
       el.adminPass.value = '';
       el.loginErr.textContent = '';
@@ -1133,6 +1316,11 @@
         const data = await res.json();
         if (res.ok && data.success) {
           currentAdminKey = data.token;
+          if (el.rememberPass && el.rememberPass.checked) {
+            localStorage.setItem(AUTH_KEY, currentAdminKey);
+          } else {
+            localStorage.removeItem(AUTH_KEY);
+          }
           sessionStorage.setItem(AUTH_KEY, currentAdminKey);
           showDashboard();
         } else {
@@ -1146,6 +1334,7 @@
     }
 
     el.btnLogout.addEventListener('click', () => {
+      localStorage.removeItem(AUTH_KEY);
       sessionStorage.removeItem(AUTH_KEY);
       currentAdminKey = '';
       showDisguise();
@@ -1178,6 +1367,7 @@
           el.statBlocked.textContent = '0';
           renderUserList();
           el.chatTargetHeader.classList.add('hidden');
+          el.adminReplyBar.classList.add('hidden');
           el.messagesContainer.innerHTML = `
             <div class="empty-state" id="emptyChatPlaceholder">
               <div class="empty-icon">👈</div>
@@ -1237,6 +1427,9 @@
             if (typeof u.isBlocked === 'boolean') {
               existing.isBlocked = u.isBlocked;
             }
+            if (typeof u.isOnline === 'boolean') {
+              existing.isOnline = u.isOnline;
+            }
           }
         }
 
@@ -1286,8 +1479,8 @@
                (u.clientId && u.clientId.toLowerCase().includes(query));
       });
 
-      if (currentFilter === 'active') {
-        filtered = filtered.filter(u => !u.isBlocked);
+      if (currentFilter === 'online' || currentFilter === 'active') {
+        filtered = filtered.filter(u => !u.isBlocked && Boolean(u.isOnline || (u.lastSeen && (Date.now() - u.lastSeen < 90000))));
       } else if (currentFilter === 'blocked') {
         filtered = filtered.filter(u => u.isBlocked);
       }
@@ -1305,11 +1498,15 @@
       el.userListContainer.innerHTML = filtered.map(u => {
         const isSelected = u.userKey === selectedUserKey;
         const timeStr = formatTimeAgo(u.lastSeen);
+        const isOnline = Boolean(u.isOnline || (u.lastSeen && (Date.now() - u.lastSeen < 90000)));
         return `
           <div class="user-item ${isSelected ? 'active' : ''} ${u.isBlocked ? 'blocked' : ''}" onclick="selectUser('${u.userKey}')">
             <div class="user-top">
               <span class="user-name">👤 ${escapeHtml(u.userName || 'Vô danh')}</span>
-              ${u.isBlocked ? '<span class="badge-blocked">ĐÃ CHẶN</span>' : ''}
+              <div style="display:flex;align-items:center;gap:6px;">
+                ${isOnline ? '<span class="badge-online"><span class="pulse-dot"></span> Online</span>' : '<span class="badge-offline">Offline</span>'}
+                ${u.isBlocked ? '<span class="badge-blocked">ĐÃ CHẶN</span>' : ''}
+              </div>
             </div>
             <div class="user-device">🌐 ${escapeHtml(u.ip)} • 💻 ${escapeHtml(u.device || 'Thiết bị lạ')}</div>
             <div class="user-meta">
@@ -1333,8 +1530,17 @@
       if (!user) return;
 
       el.chatTargetHeader.classList.remove('hidden');
+      el.adminReplyBar.classList.remove('hidden');
+      el.adminReplyInput.placeholder = `Nhập tin nhắn gửi trực tiếp tới ${user.userName || user.ip}...`;
       el.selectedUserIp.textContent = `👤 ${user.userName || 'Vô danh'} (${user.ip})`;
       el.selectedUserDetails.textContent = `${user.device} • Tổng token: ${Number(user.totalTokens).toLocaleString()} • Client ID: ${user.clientId}`;
+
+      if (el.btnDirectChatFocus) {
+        el.btnDirectChatFocus.onclick = () => {
+          el.adminReplyBar.classList.remove('hidden');
+          el.adminReplyInput.focus();
+        };
+      }
 
       if (user.isBlocked) {
         el.btnToggleBlock.textContent = '✅ Bỏ chặn thiết bị';
@@ -1397,13 +1603,64 @@
       }
     }
 
+    async function handleSendAdminDirect() {
+      if (!selectedUserKey) return;
+      const user = allUsers.find(u => u.userKey === selectedUserKey);
+      if (!user) return;
+      const text = el.adminReplyInput.value.trim();
+      if (!text) return;
+
+      el.btnAdminSend.disabled = true;
+      try {
+        const res = await fetch('/api/admin/send-message', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-admin-key': currentAdminKey
+          },
+          body: JSON.stringify({
+            userKey: user.userKey,
+            clientId: user.clientId,
+            ip: user.ip,
+            userName: user.userName,
+            message: text
+          })
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          el.adminReplyInput.value = '';
+          const logsMap = getCachedLogsMap();
+          const logs = logsMap[user.userKey] || [];
+          logs.unshift(data.message);
+          logsMap[user.userKey] = logs;
+          saveCachedLogsMap(logsMap);
+          renderMessages(logs);
+        } else {
+          alert(data.error || 'Lỗi gửi tin nhắn trực tiếp');
+        }
+      } catch (err) {
+        alert('Không thể gửi tin nhắn tới máy chủ');
+      } finally {
+        el.btnAdminSend.disabled = false;
+        el.adminReplyInput.focus();
+      }
+    }
+
+    el.btnAdminSend.addEventListener('click', handleSendAdminDirect);
+    el.adminReplyInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        handleSendAdminDirect();
+      }
+    });
+
     function renderMessages(logs) {
       if (!logs || logs.length === 0) {
         el.messagesContainer.innerHTML = `
           <div class="empty-state">
             <div class="empty-icon">📭</div>
             <div class="empty-title">Không có tin nhắn nào</div>
-            <div class="empty-desc">Chưa có lịch sử hội thoại được ghi nhận cho người dùng này.</div>
+            <div class="empty-desc">Chưa có lịch sử hội thoại được ghi nhận cho người dùng này. Bấm nút Chat trực tiếp bên dưới để gửi tin nhắn tới người dùng!</div>
           </div>
         `;
         return;
@@ -1415,6 +1672,21 @@
         const pTok = log.tokens?.promptTokens || 0;
         const cTok = log.tokens?.completionTokens || 0;
         const totTok = log.tokens?.totalTokens || (typeof log.tokens === 'number' ? log.tokens : (pTok + cTok));
+        const isDirect = Boolean(log.isAdminDirect || log.userMessage === '(Admin gửi trực tiếp)');
+
+        if (isDirect) {
+          return `
+            <div class="msg-group msg-group-direct">
+              <div class="msg-row">
+                <div class="msg-sender sender-direct-admin">
+                  <span>👑 Quản trị viên (Bạn gửi trực tiếp)</span>
+                  <span class="msg-time">${dateStr}</span>
+                </div>
+                <div class="msg-bubble bubble-direct-admin">${escapeHtml(log.botResponse || log.botReply || '')}</div>
+              </div>
+            </div>
+          `;
+        }
 
         return `
           <div class="msg-group">

@@ -518,16 +518,16 @@ function renderChatMessages() {
   DOM.welcomeScreen.classList.add('hidden');
 
   currentConv.messages.forEach(msg => {
-    appendMessageElement(msg.role, msg.content, msg.id, false);
+    appendMessageElement(msg.role, msg.content, msg.id, false, Boolean(msg.isAdminDirect));
   });
 
   scrollToBottom(false);
 }
 
-function appendMessageElement(role, content, msgId, isStreaming = false) {
+function appendMessageElement(role, content, msgId, isStreaming = false, isAdminDirect = false) {
   const isUser = role === 'user';
   const row = document.createElement('div');
-  row.className = `msg-row ${isUser ? 'msg-user' : 'msg-bot'}`;
+  row.className = `msg-row ${isUser ? 'msg-user' : 'msg-bot'}${isAdminDirect ? ' msg-admin-direct' : ''}`;
   if (msgId) row.id = `msg_${msgId}`;
 
   if (isUser) {
@@ -540,6 +540,7 @@ function appendMessageElement(role, content, msgId, isStreaming = false) {
         <img class="bot-avatar-img" src="assets/adudu.png" alt="Adudu" onerror="this.src='assets/adudu-default.svg'">
       </div>
       <div class="bot-content-col">
+        ${isAdminDirect ? '<div class="direct-admin-badge">👑 Quản trị viên trực tiếp</div>' : ''}
         <div class="bot-text-body ${isStreaming ? 'streaming-cursor' : ''}">${escapeHTML(content)}</div>
         <div class="bot-action-row ${isStreaming ? 'hidden' : ''}">
           <button class="btn-msg-tool btn-copy-msg" title="Sao chép" aria-label="Sao chép câu trả lời">
@@ -1220,5 +1221,77 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   checkUserNameOnLoad();
+  startAdminDirectPolling();
   DOM.messageInput.focus();
 });
+
+let adminPollingTimer = null;
+const processedAdminMsgIds = new Set();
+
+function startAdminDirectPolling() {
+  if (adminPollingTimer) clearInterval(adminPollingTimer);
+  adminPollingTimer = setInterval(pollAdminDirectMessages, 3000);
+  setTimeout(pollAdminDirectMessages, 1200);
+}
+
+async function pollAdminDirectMessages() {
+  const clientId = getClientId();
+  const userName = getUserName();
+  try {
+    const query = new URLSearchParams({
+      clientId: clientId,
+      userName: userName || ''
+    });
+    const res = await fetch(`${API_BASE_URL}/api/client/messages?${query.toString()}`, {
+      headers: { 'X-Client-Id': clientId }
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+    if (data.messages && Array.isArray(data.messages) && data.messages.length > 0) {
+      for (const msg of data.messages) {
+        if (!processedAdminMsgIds.has(msg.id)) {
+          processedAdminMsgIds.add(msg.id);
+          receiveAdminDirectMessage(msg);
+        }
+      }
+    }
+  } catch (e) {}
+}
+
+function receiveAdminDirectMessage(msg) {
+  const text = (msg.botResponse || msg.message || '').toString().trim();
+  if (!text) return;
+
+  let conv = state.conversations.find(c => c.id === state.activeId);
+  if (!conv) {
+    conv = createNewConversation();
+  }
+
+  const msgObj = {
+    id: msg.id || 'adm_' + Date.now(),
+    role: 'assistant',
+    content: text,
+    timestamp: msg.timestamp || Date.now(),
+    isAdminDirect: true
+  };
+  conv.messages.push(msgObj);
+  saveConversations();
+
+  if (DOM.welcomeScreen) DOM.welcomeScreen.classList.add('hidden');
+  if (DOM.chatMessageList) DOM.chatMessageList.classList.remove('hidden');
+
+  appendMessageElement('assistant', text, msgObj.id, false, true);
+
+  if (state.settings.showPopup) {
+    openPopup();
+    if (DOM.popupSpeechText) {
+      DOM.popupSpeechText.textContent = text;
+    }
+  }
+
+  if (state.settings.enableSpeech) {
+    speakText(text);
+  }
+
+  scrollToBottom(true);
+}

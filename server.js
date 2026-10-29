@@ -238,11 +238,90 @@ function verifyAdminAuth(req, res, next) {
   next();
 }
 
+const clientHeartbeatMap = new Map();
+const pendingClientMessages = new Map();
+
+async function pushClientMessage(clientId, ip, msgEntry) {
+  const targetKey = clientId || ip;
+  if (!pendingClientMessages.has(targetKey)) {
+    pendingClientMessages.set(targetKey, []);
+  }
+  pendingClientMessages.get(targetKey).push(msgEntry);
+
+  const kv = getKvConfig();
+  if (kv && clientId) {
+    try {
+      await fetch(kv.url, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${kv.token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(['RPUSH', `admin_queue:${clientId}`, JSON.stringify(msgEntry)])
+      });
+    } catch (e) {}
+  }
+}
+
+async function popClientMessages(clientId, ip) {
+  const targetKey = clientId || ip;
+  const inMem = pendingClientMessages.get(targetKey) || [];
+  pendingClientMessages.delete(targetKey);
+
+  const kv = getKvConfig();
+  if (kv && clientId) {
+    try {
+      const res = await fetch(kv.url, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${kv.token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(['LRANGE', `admin_queue:${clientId}`, 0, -1])
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.result && Array.isArray(data.result) && data.result.length > 0) {
+          await fetch(kv.url, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${kv.token}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(['DEL', `admin_queue:${clientId}`])
+          });
+          const cloudMsgs = data.result.map(m => {
+            try {
+              return typeof m === 'string' ? JSON.parse(m) : m;
+            } catch (e) {
+              return null;
+            }
+          }).filter(Boolean);
+
+          const ids = new Set(inMem.map(m => m.id));
+          for (const cm of cloudMsgs) {
+            if (!ids.has(cm.id)) {
+              inMem.push(cm);
+            }
+          }
+        }
+      }
+    } catch (e) {}
+  }
+
+  return inMem;
+}
+
 const cleanupInterval = setInterval(() => {
   const now = Date.now();
   for (const [key, record] of userUsageMap.entries()) {
     if (now - record.hourStart > 2 * 60 * 60 * 1000) {
       userUsageMap.delete(key);
+    }
+  }
+  for (const [key, hb] of clientHeartbeatMap.entries()) {
+    if (now - hb.lastSeen > 24 * 60 * 60 * 1000) {
+      clientHeartbeatMap.delete(key);
     }
   }
 }, 10 * 60 * 1000);
@@ -735,9 +814,76 @@ app.get('/api/admin/stats', verifyAdminAuth, async (req, res) => {
   });
 });
 
+app.get('/api/client/messages', async (req, res) => {
+  const ip = getClientIp(req);
+  const clientId = (req.headers['x-client-id'] || req.query.clientId || req.query.client_id || '').toString().trim();
+  const userName = (req.query.userName || req.query.user_name || '').toString().trim();
+  const device = parseDevice(req.headers['user-agent'] || '');
+  const userKey = clientId ? `${ip}::${clientId}` : ip;
+  const now = Date.now();
+
+  clientHeartbeatMap.set(userKey, {
+    lastSeen: now,
+    ip,
+    clientId,
+    userName: userName || 'Vô danh',
+    device
+  });
+
+  const kv = getKvConfig();
+  if (kv) {
+    try {
+      await fetch(`${kv.url}/pipeline`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${kv.token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify([
+          ['ZADD', 'adudu_active_clients', now, userKey],
+          ['SET', `adudu_user_meta:${userKey}`, JSON.stringify({ ip, clientId, userName: userName || 'Vô danh', device, lastSeen: now })],
+          ['EXPIRE', `adudu_user_meta:${userKey}`, 300]
+        ])
+      });
+    } catch (e) {}
+  }
+
+  const messages = await popClientMessages(clientId, ip);
+  res.json({ success: true, messages });
+});
+
+app.post('/api/admin/send-message', verifyAdminAuth, async (req, res) => {
+  const { userKey, clientId, ip, userName, message } = req.body || {};
+  const trimmed = (message || '').toString().trim();
+  if (!trimmed) {
+    return res.status(400).json({ error: 'Nội dung tin nhắn không được để trống' });
+  }
+
+  const msgId = 'adm_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
+  const msgEntry = {
+    id: msgId,
+    timestamp: Date.now(),
+    ip: ip || '127.0.0.1',
+    clientId: clientId || '',
+    userName: userName || 'Vô danh',
+    device: 'Quản trị viên',
+    userMessage: '(Admin gửi trực tiếp)',
+    botResponse: trimmed,
+    isAdminDirect: true,
+    tokens: { promptTokens: 0, completionTokens: 0, totalTokens: 0 }
+  };
+
+  await recordChatLog(msgEntry);
+  await pushClientMessage(clientId, ip, msgEntry);
+
+  res.json({ success: true, message: msgEntry });
+});
+
 app.get('/api/admin/users', verifyAdminAuth, async (req, res) => {
   const logs = await getAllLogs();
   const userMap = new Map();
+  const now = Date.now();
+
   for (const log of logs) {
     const key = log.clientId ? `${log.ip}::${log.clientId}` : log.ip;
     if (!userMap.has(key)) {
@@ -751,7 +897,8 @@ app.get('/api/admin/users', verifyAdminAuth, async (req, res) => {
         totalTokens: 0,
         firstSeen: log.timestamp,
         lastSeen: log.timestamp,
-        isBlocked: blockedSet.has(log.ip) || (log.clientId && blockedSet.has(log.clientId))
+        isBlocked: blockedSet.has(log.ip) || (log.clientId && blockedSet.has(log.clientId)),
+        isOnline: false
       });
     }
     const u = userMap.get(key);
@@ -768,6 +915,84 @@ app.get('/api/admin/users', verifyAdminAuth, async (req, res) => {
       u.firstSeen = log.timestamp;
     }
   }
+
+  const kv = getKvConfig();
+  if (kv) {
+    try {
+      const activeThreshold = now - 90000;
+      const resKv = await fetch(kv.url, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${kv.token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(['ZRANGEBYSCORE', 'adudu_active_clients', activeThreshold, '+inf'])
+      });
+      if (resKv.ok) {
+        const data = await resKv.json();
+        if (data.result && Array.isArray(data.result)) {
+          for (const k of data.result) {
+            if (userMap.has(k)) {
+              const u = userMap.get(k);
+              u.isOnline = true;
+              u.lastSeen = Math.max(u.lastSeen, now);
+            } else {
+              const parts = k.split('::');
+              const ip = parts[0] || '127.0.0.1';
+              const cId = parts[1] || '';
+              userMap.set(k, {
+                userKey: k,
+                ip,
+                clientId: cId,
+                userName: 'Vô danh',
+                device: 'Thiết bị lạ',
+                messageCount: 0,
+                totalTokens: 0,
+                firstSeen: now,
+                lastSeen: now,
+                isBlocked: blockedSet.has(ip) || (cId && blockedSet.has(cId)),
+                isOnline: true
+              });
+            }
+          }
+        }
+      }
+    } catch (e) {}
+  }
+
+  for (const [k, hb] of clientHeartbeatMap.entries()) {
+    const isOnline = (now - hb.lastSeen) < 90000;
+    if (userMap.has(k)) {
+      const u = userMap.get(k);
+      if (hb.lastSeen > u.lastSeen) {
+        u.lastSeen = hb.lastSeen;
+        if (hb.userName && hb.userName !== 'Vô danh') u.userName = hb.userName;
+        if (hb.device) u.device = hb.device;
+      }
+      if (isOnline) u.isOnline = true;
+    } else {
+      userMap.set(k, {
+        userKey: k,
+        ip: hb.ip,
+        clientId: hb.clientId,
+        userName: hb.userName || 'Vô danh',
+        device: hb.device,
+        messageCount: 0,
+        totalTokens: 0,
+        firstSeen: hb.lastSeen,
+        lastSeen: hb.lastSeen,
+        isBlocked: blockedSet.has(hb.ip) || (hb.clientId && blockedSet.has(hb.clientId)),
+        isOnline
+      });
+    }
+  }
+
+  for (const u of userMap.values()) {
+    if ((now - u.lastSeen) < 90000) {
+      u.isOnline = true;
+    }
+  }
+
   const userList = Array.from(userMap.values()).sort((a, b) => b.lastSeen - a.lastSeen);
   res.json(userList);
 });
