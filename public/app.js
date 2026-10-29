@@ -731,8 +731,8 @@ async function sendMessage(userText) {
 
   const recentMessages = currentConv.messages.slice(-4).map((m, idx, arr) => ({
     role: m.role,
-    content: (m.role === 'assistant' && idx < arr.length - 1 && m.content.length > 140)
-      ? m.content.slice(0, 140) + '...'
+    content: (m.role === 'assistant' && idx < arr.length - 1 && m.content.length > 250)
+      ? m.content.slice(0, 250) + '...'
       : m.content
   }));
 

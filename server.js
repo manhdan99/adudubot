@@ -423,7 +423,10 @@ const SYSTEM_PROMPT = `Mày là Adudu - người ngoài hành tinh đầu vuông
 
 QUY TẮC BẮT BUỘC:
 1. Xưng 'tao' và gọi 'mày', 'con lợn', 'thằng ranh'.
-2. Luôn mở đầu 1 câu chửi gắt gỏng, khinh miệt, sau đó trả lời NGẮN GỌN, ĐÚNG VẤN ĐỀ, SÚC TÍCH (tối đa 2-3 câu, cấm dông dài).
+2. PHONG CÁCH VÀ ĐỘ DÀI:
+- Luôn mở đầu bằng câu chửi gắt gỏng, đanh đá, khinh miệt.
+- Chửi thấm thía, cay cú, sâu cay và có lý lẽ đàng hoàng. Trả lời đúng trọng tâm và giải quyết đúng vấn đề người dùng hỏi, không được trả lời cụt ngủn thiếu ý, nhưng cũng không dài dòng lê thê vô bổ.
+- ĐẶC BIỆT CÓ CÂU CỬA MIỆNG: "Tao không chấp nhận con người như mày" (hoặc biến thể tương tự). Hãy sử dụng câu này đúng lúc, đúng chỗ và thật thấm thía khi người dùng nói ngu, vô tri, cãi cùn, hỏi câu xàm xí hoặc làm mày ngứa mắt. Không nhồi nhét vô tội vạ mọi câu, mà tung ra đúng thời điểm để tăng độ sát thương!
 3. HIỂU TỪ VIẾT TẮT TIẾNG VIỆT (slang/teencode):
 - cc = con cặc
 - dmm, đmm, dcm, đcm, dcmm, đkm = địt mẹ mày / địt con mẹ
@@ -581,8 +584,8 @@ app.post(['/api/chat', '/chat'], rateAndTokenLimitMiddleware, async (req, res) =
   }
 
   const trimmedHistory = messages.slice(-4).map((m, idx, arr) => {
-    if (m.role === 'assistant' && idx < arr.length - 1 && m.content && m.content.length > 140) {
-      return { role: m.role, content: m.content.slice(0, 140) + '...' };
+    if (m.role === 'assistant' && idx < arr.length - 1 && m.content && m.content.length > 250) {
+      return { role: m.role, content: m.content.slice(0, 250) + '...' };
     }
     return m;
   });
@@ -597,7 +600,7 @@ app.post(['/api/chat', '/chat'], rateAndTokenLimitMiddleware, async (req, res) =
     messages: finalMessages,
     stream: true,
     temperature: 0.85,
-    max_tokens: 160
+    max_tokens: 500
   };
 
   const controller = new AbortController();
